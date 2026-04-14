@@ -4,11 +4,15 @@ logflow
 
 # Test Data
 test_logs/sample_logs.json
+*.log
 
-# Diagrams (keep the PNGs, hide the XML)
+# Ignore the generator script (Only if you want it hidden)
+test_logs/generator.go
+
+# Diagrams
 *.drawio.xml
 
-# Project Planning (optional to hide)
+# Project Planning
 plan.md
 spec.md
 
