@@ -1,6 +1,6 @@
 # Binaries
 logflow.exe
-logflow
+/logflow
 
 # Test Data
 test_logs/sample_logs.json
