@@ -1,0 +1,17 @@
+# Binaries
+logflow.exe
+logflow
+
+# Test Data
+test_logs/sample_logs.json
+
+# Diagrams (keep the PNGs, hide the XML)
+*.drawio.xml
+
+# Project Planning (optional to hide)
+plan.md
+spec.md
+
+# OS specific files
+.DS_Store
+Thumbs.db
