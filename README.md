@@ -45,7 +45,7 @@ Each worker goroutine receives a job from the dispatcher channel, unmarshals the
 
 ```bash
 # Clone the repository
-git clone https://github.com/varkuru/logflow.git
+git clone https://github.com/theprideofwolves/logflow
 cd logflow
 
 # Build the binary
