@@ -36,7 +36,7 @@ One JSON object per line:
 ### Detection behavior
 The detector counts exact messages `Failed login attempt`, `Unauthorized API access detected`, `Rate limit exceeded`, and `Account locked after repeated failures`, plus entries whose level is exactly `ERROR`.
 
-The sixth matching failure for an IP triggers an alert. Counts accumulate over one run with no time window or expiry. Missing IPs share an empty-string counter. Alerts indicate possible suspicious activity and require investigation.
+The sixth matching failure for an IP triggers an alert. Counts accumulate over one run with no time window or expiry. Entries without a source IP are excluded from per-IP detection. Alerts indicate possible suspicious activity and require investigation.
 
 ## Engineering notes
 The queue bounds pending work and applies backpressure when full. The scanner limits each line to 1 MiB. Memory also grows with the number of distinct IPs retained by the detector.
@@ -54,3 +54,7 @@ The CLI reports observed throughput for each run. No portable throughput guarant
 ## Resume bullets
 - Built a streaming Go log processor that validates JSON events from files or stdin and distributes analysis across 100 workers through a 1,000-job buffered queue.
 - Implemented mutex-protected per-IP failure counters, threshold alerts for possible brute-force activity, and processing summaries covering skipped entries, throughput, and alert totals.
+
+
+## Interview demonstration and verification
+See [INTERVIEW.md](INTERVIEW.md) for a walkthrough, expected results, design decisions, and limitations. Run `go test ./...`, `go vet ./...`, and `go build ./...`. GitHub Actions also runs the race detector on Linux.

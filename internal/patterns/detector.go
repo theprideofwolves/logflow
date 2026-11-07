@@ -10,11 +10,11 @@ import (
 // ThreatDetector tracks suspicious activity across log entries.
 // It is safe for concurrent use by multiple worker goroutines.
 type ThreatDetector struct {
-	mu             sync.Mutex
-	failuresByIP   map[string]int
-	alertedIPs     map[string]bool
-	Threshold      int
-	TotalThreats   int
+	mu           sync.Mutex
+	failuresByIP map[string]int
+	alertedIPs   map[string]bool
+	Threshold    int
+	TotalThreats int
 }
 
 // NewThreatDetector creates a detector with the given failure threshold.
@@ -30,7 +30,7 @@ func NewThreatDetector(threshold int) *ThreatDetector {
 // If an IP exceeds the failure threshold, it prints a threat warning.
 func (td *ThreatDetector) Analyze(entry parser.LogEntry) {
 	// Only count entries that indicate a failed action
-	if !isFailure(entry) {
+	if !isFailure(entry) || entry.SourceIP == "" {
 		return
 	}
 

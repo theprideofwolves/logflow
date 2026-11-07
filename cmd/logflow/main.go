@@ -85,7 +85,8 @@ func main() {
 		processed++
 	}
 
-	if err := scanner.Err(); err != nil {
+	scanErr := scanner.Err()
+	if err := scanErr; err != nil {
 		fmt.Fprintf(os.Stderr, "[ERROR] Scanner error: %v\n", err)
 	}
 
@@ -110,8 +111,11 @@ func main() {
 	fmt.Println("════════════════════════════════════════")
 
 	if rate >= 10_000 {
-		fmt.Println("  ✓ PASS — meets 10,000 logs/sec target")
+		fmt.Println("  Observed throughput above 10,000 logs/sec on this input (not a benchmark guarantee)")
 	} else {
-		fmt.Println("  ✗ FAIL — below 10,000 logs/sec target")
+		fmt.Println("  Observed throughput below 10,000 logs/sec on this input (not a correctness failure)")
+	}
+	if scanErr != nil {
+		os.Exit(1)
 	}
 }

@@ -31,7 +31,7 @@ func (w *Worker) Start() {
 	go func() {
 		// Signal completion when the goroutine exits
 		defer w.WaitGroup.Done()
-		
+
 		for {
 			select {
 			case job, ok := <-w.JobQueue:
@@ -50,8 +50,6 @@ func (w *Worker) Start() {
 		}
 	}()
 }
-
-
 
 // Dispatcher manages the worker pool and distributes incoming jobs.
 type Dispatcher struct {
@@ -89,7 +87,7 @@ func (d *Dispatcher) Start() {
 			Process:   d.ProcessFunc,
 		}
 		d.workers[i] = worker
-		
+
 		d.wg.Add(1)
 		worker.Start()
 	}

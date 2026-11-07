@@ -1,0 +1,9 @@
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:00Z", "level": "WARN", "source_ip": "192.0.2.10", "message": "Failed login attempt"}
+{"timestamp": "2026-11-06T12:00:01Z", "level": "INFO", "source_ip": "192.0.2.20", "message": "Login succeeded"}
+{"timestamp": "2026-11-06T12:00:02Z", "level": "ERROR", "message": "Missing source IP"}
+not-json
