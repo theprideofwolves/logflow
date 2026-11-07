@@ -15,3 +15,11 @@ real user pilot. These remain distinct from unit tests and HTTP smoke checks.
 Unsigned portable packages include dependency build metadata, not a full SBOM.
 Custom required Jira fields, provider credential vaulting, remote/shared deployment,
 automatic remediation and ServiceNow are outside this focused release.
+
+## v1.2.0 onboarding checks
+Welcome/own-data choice, offline first task, expected-result explanation, next-step
+panel, export, restart safety and remembered completion are exercised by the
+packaged smoke test on Windows/Linux. Unit tests cover read-only Jira outcomes,
+credential non-retention, field preservation, invalid setup requests, missing or
+corrupt preferences, folder checks and mocked native selection. A real native
+dialog and live AWS/Jira credentials still require manual validation.

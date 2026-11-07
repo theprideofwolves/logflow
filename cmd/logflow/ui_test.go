@@ -20,7 +20,7 @@ func TestDemoPersistenceExportAndIsolation(t *testing.T) {
 	m := multipart.NewWriter(&b)
 	m.WriteField("action", "demo")
 	m.Close()
-	r := httptest.NewRequest("POST", "http://localhost/", &b)
+	r := httptest.NewRequest("POST", "http://localhost/?token=token", &b)
 	r.Header.Set("Content-Type", m.FormDataContentType())
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -37,7 +37,7 @@ func TestDemoPersistenceExportAndIsolation(t *testing.T) {
 	}
 	h = newUI(dir, "new-token", ts, state)
 	w = httptest.NewRecorder()
-	h.ServeHTTP(w, httptest.NewRequest("GET", "http://localhost/export", nil))
+	h.ServeHTTP(w, httptest.NewRequest("GET", "http://localhost/export?token=new-token", nil))
 	if !strings.Contains(w.Body.String(), state.Report.InputHash) {
 		t.Fatal("export lost evidence")
 	}
@@ -46,7 +46,7 @@ func TestDemoPersistenceExportAndIsolation(t *testing.T) {
 	m.WriteField("action", "ticket")
 	m.WriteField("id", state.Report.Alerts[0].ID)
 	m.Close()
-	r = httptest.NewRequest("POST", "http://localhost/", &b)
+	r = httptest.NewRequest("POST", "http://localhost/?token=new-token", &b)
 	r.Header.Set("Content-Type", m.FormDataContentType())
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)

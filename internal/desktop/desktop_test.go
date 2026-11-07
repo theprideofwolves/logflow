@@ -18,6 +18,9 @@ func TestRequestBoundaries(t *testing.T) {
 			r.Header.Set("Origin", tc.origin)
 			w := httptest.NewRecorder()
 			h.ServeHTTP(w, r)
+			if w.Header().Get("Referrer-Policy") != "same-origin" {
+				t.Fatal("form-compatible referrer policy missing")
+			}
 			if w.Code != tc.want {
 				t.Fatal(w.Code)
 			}
