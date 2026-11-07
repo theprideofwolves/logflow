@@ -66,7 +66,7 @@ directory separately only if you intend to remove history.
 
 ## Release verification
 CI runs unit/integration tests, race detection, vet, and builds on Windows/Linux.
-Version tags publish portable ZIPs and SHA256 checksums after tests pass.
+Version tags or an explicit [release] commit on main publish the VERSION-selected portable ZIPs and SHA256 checksums after tests pass.
 Dependency metadata is included using go version -m; it is not a full license
 inventory or a signed supply-chain attestation. No unsupported scale or
 enterprise-certification claim is made.

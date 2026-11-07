@@ -25,7 +25,7 @@ jobs:
           name: logflow-${{ runner.os }}
           path: dist/
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -50,4 +50,7 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release/* --title "LogFlow $GITHUB_REF_NAME" --notes-file RELEASE.md
+        run: |
+          tag="v$(cat VERSION)"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then tag="$GITHUB_REF_NAME"; fi
+          gh release create "$tag" release/* --target "$GITHUB_SHA" --title "LogFlow $tag" --notes-file RELEASE.md
