@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='smoke-',dir=os.environ.get('PORTFOLIO_S
   elif repo=='logflow':assert '192.0.2.10' in page
   else:assert 'Potential secret' in page and 'synthetic-demo-only-abc123' not in page
   token=urllib.parse.parse_qs(urllib.parse.urlparse(url).query)['token'][0]
-  export=urllib.parse.urljoin(url,'/export?')+urllib.parse.urlencode({'token':token})
+  export=urllib.parse.urljoin(url,'/export')+'?'+urllib.parse.urlencode({'token':token})
   payload=urllib.request.urlopen(export,timeout=10).read().decode();value=json.loads(payload)
   if repo=='vanguard':assert value['Passed'] is False and len(value['PolicyHash'])==64
   elif repo=='logflow':assert value['Report']['Complete'] and len(value['Report']['Alerts'])==1
