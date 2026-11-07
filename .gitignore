@@ -19,3 +19,12 @@ spec.md
 # OS specific files
 .DS_Store
 Thumbs.db
+*.exe
+/dist/
+/release/
+/package-*/
+/coverage.out
+/logflow
+*.db
+*.db-shm
+*.db-wal

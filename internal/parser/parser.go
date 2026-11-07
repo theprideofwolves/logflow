@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/varkuru/logflow/internal/worker"
+	"github.com/theprideofwolves/logflow/internal/worker"
 )
 
 // StreamParser reads JSON log objects one at a time from a reader,

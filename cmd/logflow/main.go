@@ -1,121 +1,72 @@
 package main
 
 import (
-	"bufio"
+	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
+	"github.com/theprideofwolves/logflow/internal/analysis"
+	"io"
 	"os"
+	"os/signal"
 	"time"
-
-	"github.com/varkuru/logflow/internal/parser"
-	"github.com/varkuru/logflow/internal/patterns"
-	"github.com/varkuru/logflow/internal/worker"
 )
 
-func main() {
-	const poolSize = 100
-	const queueSize = 1000
-	const threatThreshold = 5
-
-	// --- Determine the input source ---
-	var input *os.File
-	var sourceName string
-
-	if len(os.Args) > 1 {
-		// File path provided as argument
-		f, err := os.Open(os.Args[1])
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "[FATAL] Cannot open log file: %v\n", err)
-			os.Exit(1)
+func run(args []string, out, errs io.Writer) int {
+	fs := flag.NewFlagSet("logflow", flag.ContinueOnError)
+	fs.SetOutput(errs)
+	window := fs.Duration("window", 10*time.Minute, "Inclusive event-time window")
+	threshold := fs.Int("threshold", 6, "Failures needed to alert")
+	workers := fs.Int("workers", 4, "Parser workers 1-32")
+	if e := fs.Parse(args); e != nil {
+		if e == flag.ErrHelp {
+			return 0
+		}
+		return 2
+	}
+	if fs.NArg() > 1 {
+		fmt.Fprintln(errs, "one JSONL file or - for stdin required")
+		return 2
+	}
+	var input io.Reader = os.Stdin
+	if fs.NArg() == 1 && fs.Arg(0) != "-" {
+		f, e := os.Open(fs.Arg(0))
+		if e != nil {
+			fmt.Fprintln(errs, e)
+			return 2
 		}
 		defer f.Close()
 		input = f
-		sourceName = os.Args[1]
-	} else {
-		// No argument — read from stdin (piped input)
-		input = os.Stdin
-		sourceName = "stdin"
 	}
-
-	fmt.Printf("[ENGINE] Reading from: %s\n", sourceName)
-
-	// --- Initialize the Threat Detector ---
-	detector := patterns.NewThreatDetector(threatThreshold)
-
-	// --- Define the processing callback for each worker ---
-	processFn := func(payload []byte) {
-		entry, err := parser.ParseLine(payload)
-		if err != nil {
-			return
+	opts := analysis.DefaultOptions()
+	opts.Window = *window
+	opts.Threshold = *threshold
+	opts.Workers = *workers
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	r, e := analysis.Process(ctx, input, opts)
+	if e != nil {
+		fmt.Fprintln(errs, e)
+		return 2
+	}
+	if e = json.NewEncoder(out).Encode(r); e != nil {
+		fmt.Fprintln(errs, e)
+		return 2
+	}
+	if !r.Complete {
+		return 2
+	}
+	return 0
+}
+func main() {
+	if len(os.Args) == 1 || (len(os.Args) == 2 && os.Args[1] == "-ui") {
+		if e := launchUI(); e != nil {
+			fmt.Println(e)
+			fmt.Println("Press Enter to close")
+			fmt.Scanln()
+			os.Exit(2)
 		}
-		detector.Analyze(entry)
+		return
 	}
-
-	// --- Start the Dispatcher with 100 workers ---
-	dispatcher := worker.NewDispatcher(poolSize, queueSize, processFn)
-	dispatcher.Start()
-	fmt.Printf("[ENGINE] Dispatcher started with %d workers (threat threshold: %d)\n", poolSize, threatThreshold)
-	fmt.Println()
-
-	// --- Read the file line-by-line and feed the pool ---
-	scanner := bufio.NewScanner(input)
-
-	// Increase the default 64KB buffer for safety with long lines
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
-
-	processed := 0
-	skipped := 0
-
-	start := time.Now()
-
-	for scanner.Scan() {
-		line := scanner.Bytes()
-
-		// Validate through ParseLine before submitting
-		_, err := parser.ParseLine(line)
-		if err != nil {
-			skipped++
-			continue
-		}
-
-		// Copy the line — scanner reuses its internal buffer
-		payload := make([]byte, len(line))
-		copy(payload, line)
-
-		dispatcher.Submit(worker.Job{Payload: payload})
-		processed++
-	}
-
-	scanErr := scanner.Err()
-	if err := scanErr; err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR] Scanner error: %v\n", err)
-	}
-
-	// --- Shutdown and measure ---
-	dispatcher.Stop()
-	elapsed := time.Since(start)
-
-	rate := float64(processed) / elapsed.Seconds()
-	trackedIPs, threats := detector.Summary()
-
-	fmt.Println()
-	fmt.Println("════════════════════════════════════════")
-	fmt.Println("          LogFlow Engine Report         ")
-	fmt.Println("════════════════════════════════════════")
-	fmt.Printf("  Processed : %d entries\n", processed)
-	fmt.Printf("  Skipped   : %d entries\n", skipped)
-	fmt.Printf("  Duration  : %s\n", elapsed.Round(time.Millisecond))
-	fmt.Printf("  Throughput: %.0f logs/sec\n", rate)
-	fmt.Println("────────────────────────────────────────")
-	fmt.Printf("  IPs tracked : %d\n", trackedIPs)
-	fmt.Printf("  Threats     : %d brute-force alerts\n", threats)
-	fmt.Println("════════════════════════════════════════")
-
-	if rate >= 10_000 {
-		fmt.Println("  Observed throughput above 10,000 logs/sec on this input (not a benchmark guarantee)")
-	} else {
-		fmt.Println("  Observed throughput below 10,000 logs/sec on this input (not a correctness failure)")
-	}
-	if scanErr != nil {
-		os.Exit(1)
-	}
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
