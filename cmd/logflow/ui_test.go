@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/theprideofwolves/logflow/internal/analysis"
 	"github.com/theprideofwolves/logflow/internal/ticket"
 	"mime/multipart"
 	"net/http/httptest"
@@ -11,6 +12,57 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestOwnLogUploadAndCompletionBoundary(t *testing.T) {
+	for _, partial := range []bool{false, true} {
+		t.Run(map[bool]string{false: "complete", true: "partial"}[partial], func(t *testing.T) {
+			dir := t.TempDir()
+			ts, err := ticket.Open(filepath.Join(dir, "tickets.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := newUI(dir, "token", ts, saved{})
+			var body bytes.Buffer
+			m := multipart.NewWriter(&body)
+			m.WriteField("action", "analyze")
+			m.WriteField("threshold", "6")
+			m.WriteField("window", "10m")
+			file, err := m.CreateFormFile("logs", "ordered.jsonl")
+			if err != nil {
+				t.Fatal(err)
+			}
+			logs := analysis.Demo()
+			if partial {
+				logs += "not-json\n"
+			}
+			file.Write([]byte(logs))
+			m.Close()
+			r := httptest.NewRequest("POST", "http://localhost/?token=token", &body)
+			r.Header.Set("Content-Type", m.FormDataContentType())
+			out := httptest.NewRecorder()
+			h.ServeHTTP(out, r)
+			if out.Code != 200 {
+				t.Fatal(out.Code, out.Body.String())
+			}
+			out = httptest.NewRecorder()
+			h.ServeHTTP(out, httptest.NewRequest("GET", "http://localhost/export?token=token", nil))
+			var result saved
+			if err := json.Unmarshal(out.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.Demo || result.Report == nil || result.Report.Complete == partial || len(result.Report.Alerts) != 1 || len(result.Report.Alerts[0].Evidence) != 6 {
+				t.Fatal("incorrect own-log investigation", out.Body.String())
+			}
+			_, err = os.Stat(filepath.Join(dir, "onboarding.json"))
+			if partial && !os.IsNotExist(err) {
+				t.Fatal("partial upload marked complete", err)
+			}
+			if !partial && err != nil {
+				t.Fatal("complete upload progress not saved", err)
+			}
+		})
+	}
+}
 
 func TestDemoPersistenceExportAndIsolation(t *testing.T) {
 	dir := t.TempDir()

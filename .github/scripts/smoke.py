@@ -1,6 +1,6 @@
 import html,json,os,re,subprocess,sys,tempfile,threading,queue,urllib.request,urllib.parse
 from pathlib import Path
-repo,executable=sys.argv[1:3]
+executable=sys.argv[1]
 def multipart(fields):
  boundary='onboarding-smoke-boundary';data=b''
  for name,value in fields.items():data+=(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n').encode()
@@ -17,8 +17,8 @@ def post(url,fields,multi=False):
  if multi:data,ct=multipart(fields)
  else:data,ct=urllib.parse.urlencode(fields).encode(),'application/x-www-form-urlencoded'
  return urllib.request.urlopen(urllib.request.Request(url,data=data,headers={'Content-Type':ct}),timeout=30).read().decode()
-with tempfile.TemporaryDirectory(prefix='onboarding-',dir=os.environ.get('PORTFOLIO_SMOKE_TEMP')) as root:
- env=dict(os.environ,PORTFOLIO_DATA_DIR=root,PORTFOLIO_NO_BROWSER='1',S3_AUDITOR_DATA_DIR=str(Path(root,'S3Auditor')),S3_AUDITOR_NO_BROWSER='1')
+with tempfile.TemporaryDirectory(prefix='logflow-',dir=os.environ.get('LOGFLOW_SMOKE_TEMP')) as root:
+ env=dict(os.environ,LOGFLOW_DATA_DIR=root,LOGFLOW_NO_BROWSER='1')
  p,url=launch(env)
  try:
   page=get(url);assert 'Try the guided demo' in page and 'Use my data' in page and 'ZgotmplZ' not in page
@@ -26,23 +26,17 @@ with tempfile.TemporaryDirectory(prefix='onboarding-',dir=os.environ.get('PORTFO
   def route(path):return urllib.parse.urljoin(url,path)+'?'+urllib.parse.urlencode({'token':token})
   setup=get(route('/setup'));assert 'Set up your first task' in setup
   assert not list(Path(root).glob('*/onboarding.json')), 'viewing setup marked guide complete'
-  if repo=='vanguard':
-   assert json.loads(get(route('/onboarding/sample')+'&name=report.json'))['findings']
-   fields={'policy':'apiVersion: vanguard/v1\nkind: SecurityPolicy\nthresholds: {critical: 0}\n','report':'{"findings":[{"id":"synthetic","severity":"critical"}]}'}
-  else:fields={'action':'demo'}
-  page=post(url+'&onboarding=demo',fields,repo in ('vanguard','logflow'))
+  sample=get(route('/onboarding/sample')+'&name=example-logs.jsonl')
+  records=[json.loads(line) for line in sample.splitlines()]
+  assert len(records)==8 and all(record['message']=='Failed login attempt' for record in records)
+  page=post(url+'&onboarding=demo',{'action':'demo'},True)
   assert 'id="results"' in page and 'href="#results"' in page
   assert 'Your first result is ready' in page and 'Guided demo - synthetic data' in page and 'ZgotmplZ' not in page
-  if repo=='vanguard':assert '<h2>FAIL</h2>' in page
-  elif repo=='logflow':assert '192.0.2.10' in page
-  elif repo=='creddrift':assert 'Potential secret' in page and 'synthetic-demo-only-abc123' not in page
-  else:assert 'demo-access-denied' in page
+  assert '192.0.2.10' in page
   link=re.search(r'href="(/export[^\"]+)"',page);assert link,'missing export'
   payload=get(urllib.parse.urljoin(url,html.unescape(link.group(1))));value=json.loads(payload)
-  if repo=='vanguard':assert value['Passed'] is False
-  elif repo=='logflow':assert value['Report']['Complete'] and len(value['Report']['Alerts'])==1
-  elif repo=='creddrift':assert len(value)==1 and 'synthetic-demo-only-abc123' not in payload
-  else:assert value['Demo'] and len(value['Reports'])==4
+  assert value['Demo'] and value['Report']['Complete'] and len(value['Report']['Alerts'])==1
+  assert len(value['Report']['Alerts'][0]['Evidence'])==6
   assert list(Path(root).glob('*/onboarding.json')),'completion not remembered'
   assert 'Try the guided demo' in get(route('/welcome'))
   assert json.loads(get(urllib.parse.urljoin(url,html.unescape(link.group(1)))))==value,'restart guide modified results'
@@ -53,8 +47,6 @@ with tempfile.TemporaryDirectory(prefix='onboarding-',dir=os.environ.get('PORTFO
  p,url=launch(env)
  try:
   page=get(url);assert 'Try the guided demo' not in page and 'Welcome back' in page
-  if repo=='logflow':assert '192.0.2.10' in page
-  elif repo=='creddrift':assert 'Potential secret' in page
-  elif repo=='s3-auditor':assert 'demo-access-denied' in page
+  assert '192.0.2.10' in page
  finally:p.terminate();p.wait(timeout=15)
- print(repo+': packaged welcome, setup, guided demo, next step, export, restart safety and remembered completion PASS')
+ print('LogFlow: packaged welcome, setup, guided demo, next step, export, restart safety and remembered completion PASS')

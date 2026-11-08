@@ -19,7 +19,7 @@ jobs:
       - run: go test -race -count=1 ./...
       - run: go build -trimpath -o dist/logflow${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/logflow
       - name: Packaged workflow smoke test
-        run: python .github/scripts/smoke.py logflow dist/logflow${{ runner.os == 'Windows' && '.exe' || '' }}
+        run: python .github/scripts/smoke.py dist/logflow${{ runner.os == 'Windows' && '.exe' || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: logflow-${{ runner.os }}

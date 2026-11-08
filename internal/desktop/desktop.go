@@ -17,7 +17,7 @@ import (
 )
 
 func DataDir(name string) (string, error) {
-	d := os.Getenv("PORTFOLIO_DATA_DIR")
+	d := os.Getenv("LOGFLOW_DATA_DIR")
 	if d == "" {
 		var e error
 		d, e = os.UserConfigDir()
@@ -81,7 +81,7 @@ func Serve(name, dir string, factory func(string) http.Handler) error {
 	server := &http.Server{Handler: Protect(l.Addr().String(), token, factory(token)), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 60 * time.Second}
 	fmt.Println(name + ": " + address)
 	fmt.Println("Data: " + dir + "\nClose with Ctrl+C in this console. Closing the browser does not stop the application.")
-	if os.Getenv("PORTFOLIO_NO_BROWSER") == "" {
+	if os.Getenv("LOGFLOW_NO_BROWSER") == "" {
 		var cmd *exec.Cmd
 		switch runtime.GOOS {
 		case "windows":

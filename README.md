@@ -57,7 +57,7 @@ privileged processes can read memory and data. Do not expose it to a network.
 No telemetry, background uploads, automatic remediation or AI dependency.
 
 Data defaults to the OS user configuration directory / application name.
-Set PORTFOLIO_DATA_DIR to change its parent; PORTFOLIO_NO_BROWSER=1 suppresses
+Set LOGFLOW_DATA_DIR to change its parent; LOGFLOW_NO_BROWSER=1 suppresses
 browser opening. Only one launcher may use a data directory. After a crash,
 confirm the process has stopped before removing application.lock.
 Stop the app before backup/restore. Replace executables to upgrade; user data
@@ -95,28 +95,23 @@ TLS fake-server tests are not proof of live integration.
 `go test -race ./...`, `go vet ./...`, `go build ./cmd/logflow`.
 See architecture.md, interviewprep.md and explaining-each-decision-taken-over-others.md.
 
-## Guided first run (v1.2.0)
+## Guided first run
 
-On a new installation, choose **Try the guided demo** or **Use my data**.
-The demo runs offline and explains its expected result. Setup checks are separate
-from scans/evaluations and never create tickets. After a successful task, the
-workspace shows the next step and remembers guide completion in onboarding.json.
-That file contains only a version and completion flag, never credentials.
-Use **Restart the guide** at any time; it does not reset existing reports.
-**Continue to existing workspace** opens saved work without rerunning a task.
+Choose **Try the guided demo** or **Use my data**. The offline demo analyzes eight
+synthetic failed logins and produces one alert for 192.0.2.10, showing the six
+events that triggered it. It cannot create a real Jira ticket.
 
-Jira-enabled tools offer a read-only sign-in check against /rest/api/3/myself.
-This verifies authentication only, not project creation/comment permissions.
-The check does not retain email/API tokens. Re-enter credentials when sending
-a reviewed finding. The AWS setup check in S3 Auditor verifies account identity
-only; it does not claim bucket access is verified.
+For your own data, download example-logs.jsonl from setup, then upload your
+ordered JSONL file in the workspace. No account or connection is needed for
+local analysis. Review completeness and rejected records before interpreting
+alerts, then export the investigation or explicitly send an alert to Jira.
 
-CredDrift offers an explicit native folder picker, a readability check, and
-transfer of the selected path into the scan form. On Linux the optional picker
-uses zenity; if unavailable, paste an absolute path instead. Vanguard and LogFlow
-offer downloadable example inputs. Vanguard evaluation needs no connection;
-optional Slack remains a CLI feature and this guide never sends Slack messages.
+The optional Jira sign-in check calls GET /rest/api/3/myself. It checks identity,
+not project create/comment permissions, and never creates tickets or saves your
+email/API token. Re-enter credentials for a reviewed alert handoff.
 
-A corrupt/missing guide-preference file shows the guide again without changing
-application results. If progress cannot be saved, the guide says so; exports and
-existing domain data are not discarded. Setup is single-user and local.
+A complete analysis remembers guide completion in onboarding.json, containing
+only a version and completion flag. Partial reports do not mark completion.
+**Restart the guide** preserves reports; **Continue to existing workspace** opens
+saved work without rerunning analysis. Missing or corrupt guide preferences show
+the guide again. A progress-save failure is displayed without discarding results.

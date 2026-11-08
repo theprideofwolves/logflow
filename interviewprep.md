@@ -37,25 +37,24 @@ workflow and implementation, and validated defined cases with automated tests.
 Replace this with specific actions you actually performed and can demonstrate.
 Documentation supports study; it cannot guarantee absence of knowledge gaps.
 
-## Onboarding design and study notes
+## Answers grounded in LogFlow
 
-The internal/onboarding package owns the welcome/setup routes, escaped progress
-panel, declared non-secret session fields, and a versioned completion preference.
-Core handlers explicitly call Complete only after a successful domain operation.
-A failing policy evaluation is still a successful task; a partial LogFlow report
-is not marked complete. Guide status is not a security/compliance conclusion.
+The rule is the exact message "Failed login attempt" with a valid normalized IP;
+ERROR alone does not count. By default six failures in an inclusive ten-minute
+event-time window trigger one investigation alert. It is not proof of compromise.
 
-GET/sample/setup routes do not run scans or create tickets. POST setup checks
-use bounded read-only requests; Jira identity is not project authorization. Native
-folder selection is explicit, bounded and has a manual fallback. Preflight checks
-never store tokens, and Jira checks preserve previously selected local fields.
+Four parser workers are the default, not a proven optimum. Ordered reduction
+keeps decisions independent of parser scheduling. Out-of-order events are
+rejected rather than silently sorted; the report becomes incomplete.
 
-Why not a JS tour library? Server-rendered forms and a small guide keep packaging
-light, work offline and are keyboard accessible. Each independent repository
-contains its own internal copy and tests; no cross-project service is required.
-That trades centralized updates for simpler standalone distribution.
+Per-IP evidence is capped at the configured threshold. Alerts, active IPs, line
+lengths and batches have explicit bounds. Explain the limit and unread-suffix
+fields instead of claiming a partial result represents the complete file.
 
-Practice: explain a fresh launch, a failed check, a successful demo, persistence
-after restart, and why restarting the guide cannot delete assessment data. Read
-onboarding_test.go and the packaged smoke script to distinguish a connection
-check from an end-to-end live integration test.
+Jira intent is stored before issue creation. An uncertain response blocks blind
+recreation until the analyst finds and links the issue. This is local duplicate
+protection, not an exactly-once distributed guarantee. Setup verifies identity
+only; handoff needs separate project permissions. Demo alerts cannot be sent.
+
+Trace these answers through engine_test.go, ui_test.go, ticket_test.go and the
+LogFlow-only packaged smoke test. Guide completion is not a security verdict.

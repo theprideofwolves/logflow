@@ -1,7 +1,6 @@
 package onboarding
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -58,24 +57,27 @@ func TestFirstRunChoiceAndPersistence(t *testing.T) {
 		t.Fatal(string(b))
 	}
 }
-func TestSetupChecksAreNonDestructiveAndPrefill(t *testing.T) {
+func TestSetupOnlyOffersLogInputAndOptionalJira(t *testing.T) {
 	calls := 0
-	checks := 0
-	w := New(Config{Name: "Example", Token: "t", Folder: true, Fields: []Field{{Name: "path", Label: "Folder"}}, Check: func(ctx context.Context, v map[string]string) (string, error) {
-		checks++
-		if v["path"] != "<script>" {
-			t.Fatal(v)
-		}
-		return "Readable, not scanned", nil
-	}, Picker: func(context.Context) (string, error) { return "/chosen/folder", nil }})
+	w := New(Config{Name: "LogFlow", Token: "t", Jira: true, Steps: []string{"Upload ordered JSONL logs."}, Samples: []Sample{{"example-logs.jsonl", "synthetic"}}})
 	h := w.Wrap(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { calls++ }))
-	out := req(h, "POST", "/setup/check?token=t", url.Values{"check": {"input"}, "path": {"<script>"}})
-	if out.Code != 200 || !strings.Contains(out.Body.String(), "Readable, not scanned") || strings.Contains(out.Body.String(), "value=\"<script>") || calls != 0 || checks != 1 {
-		t.Fatal(out.Body.String())
+	out := req(h, "GET", "/setup?token=t", nil)
+	for _, text := range []string{"ordered JSONL", "example-logs.jsonl", "Optional: test Jira sign-in"} {
+		if !strings.Contains(out.Body.String(), text) {
+			t.Fatal("missing setup guidance", text)
+		}
 	}
-	req(h, "POST", "/setup/check?token=t", url.Values{"check": {"browse"}})
-	if w.Value("path") != "/chosen/folder" || calls != 0 {
-		t.Fatal("picker ran task")
+	for _, action := range []string{"browse", "input", "unknown"} {
+		if req(h, "POST", "/setup/check?token=t", url.Values{"check": {action}}).Code != 400 {
+			t.Fatal("unsupported action accepted", action)
+		}
+	}
+	if calls != 0 || w.done {
+		t.Fatal("setup executed analysis or marked completion")
+	}
+	disabled := New(Config{Token: "t"}).Wrap(http.NotFoundHandler())
+	if req(disabled, "POST", "/setup/check?token=t", url.Values{"check": {"jira"}}).Code != 400 {
+		t.Fatal("disabled integration accepted")
 	}
 }
 func TestRequestAndSampleBoundaries(t *testing.T) {
@@ -139,7 +141,7 @@ func TestJiraReadOnlyAndNoCredentialRetention(t *testing.T) {
 			}))
 			defer srv.Close()
 			dir := t.TempDir()
-			w := New(Config{Token: "t", Dir: dir, Jira: true, Client: srv.Client(), Fields: []Field{{Name: "path", Default: "/selected"}}})
+			w := New(Config{Token: "t", Dir: dir, Jira: true, Client: srv.Client()})
 			h := w.Wrap(http.NotFoundHandler())
 			out := req(h, "POST", "/setup/check?token=t", url.Values{"check": {"jira"}, "jira": {srv.URL}, "email": {"analyst@example.test"}, "secret": {"sensitive-only-for-test"}})
 			if out.Code != 200 || calls != 1 {
@@ -151,7 +153,7 @@ func TestJiraReadOnlyAndNoCredentialRetention(t *testing.T) {
 			if strings.Contains(out.Body.String(), "sensitive-only-for-test") || strings.Contains(out.Body.String(), "analyst@example.test") {
 				t.Fatal("credential echoed")
 			}
-			if w.Value("secret") != "" || w.Value("email") != "" || w.done || w.Value("path") != "/selected" {
+			if w.done || w.started {
 				t.Fatal("credential or completion retained")
 			}
 			files, _ := os.ReadDir(dir)
@@ -161,21 +163,8 @@ func TestJiraReadOnlyAndNoCredentialRetention(t *testing.T) {
 		})
 	}
 }
-func TestFolderAndPreferenceFailures(t *testing.T) {
+func TestPreferenceFailures(t *testing.T) {
 	dir := t.TempDir()
-	if _, e := CheckFolder(context.Background(), map[string]string{"path": dir}); e != nil {
-		t.Fatal(e)
-	}
-	for _, p := range []string{"relative", filepath.Join(dir, "missing")} {
-		if _, e := CheckFolder(context.Background(), map[string]string{"path": p}); e == nil {
-			t.Fatal(p)
-		}
-	}
-	p := filepath.Join(dir, "file.txt")
-	os.WriteFile(p, []byte("not a directory"), 0600)
-	if _, e := CheckFolder(context.Background(), map[string]string{"path": p}); e == nil {
-		t.Fatal("file accepted as folder")
-	}
 	os.WriteFile(filepath.Join(dir, "onboarding.json"), []byte("corrupt"), 0600)
 	w := New(Config{Dir: dir})
 	if w.done || w.started {

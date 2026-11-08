@@ -1,25 +1,20 @@
-# LogFlow: release scope and validation
+# LogFlow v1.2.1
 
-Portable single-user Windows/Linux release. See README for the two supported
-workflows, setup, data storage and important limitations.
+Portable single-user log investigation for Windows/Linux: ordered JSONL analysis,
+time-window failed-login alerts, contributing-event evidence, JSON export, and
+optional analyst-approved Jira Cloud handoff.
 
-Automated gates: go test -race, go vet, Windows/Linux compilation, and package
-smoke checks. Feature tests cover documented state transitions, malformed input,
-boundary conditions, caps, and external failure contracts. No promise of every
-conceivable edge case.
+This patch removes unrelated onboarding documentation and unused setup paths,
+specializes the packaged smoke test to LogFlow, and replaces stale interview
+notes with the implemented event-time architecture. Launcher overrides are now
+LOGFLOW_DATA_DIR (parent directory) and LOGFLOW_NO_BROWSER. Default user data
+locations and saved report/ticket formats are unchanged.
 
-Manual validation: live Slack/Jira permissions and delivery; human accessibility
-review; interactive first launch on a clean OS; long-running resource measurement;
-real user pilot. These remain distinct from unit tests and HTTP smoke checks.
+Automated gates: race-enabled Go tests, vet, native Windows/Linux builds, and
+packaged launch/setup/demo/evidence/export/restart smoke checks. Jira contract
+tests use TLS fake servers. Live Jira project permissions/custom fields, a clean
+OS interactive launch, accessibility, and sustained workload measurement still
+need separate validation. Passing tests do not establish enterprise deployment.
 
-Unsigned portable packages include dependency build metadata, not a full SBOM.
-Custom required Jira fields, provider credential vaulting, remote/shared deployment,
-automatic remediation and ServiceNow are outside this focused release.
-
-## v1.2.0 onboarding checks
-Welcome/own-data choice, offline first task, expected-result explanation, next-step
-panel, export, restart safety and remembered completion are exercised by the
-packaged smoke test on Windows/Linux. Unit tests cover read-only Jira outcomes,
-credential non-retention, field preservation, invalid setup requests, missing or
-corrupt preferences, folder checks and mocked native selection. A real native
-dialog and live AWS/Jira credentials still require manual validation.
+Packages are unsigned and include dependency build metadata and ZIP checksums.
+No account, paid API, database server, or developer tools are needed offline.
