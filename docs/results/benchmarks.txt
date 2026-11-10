@@ -1,0 +1,18 @@
+goos: windows
+goarch: amd64
+pkg: github.com/theprideofwolves/logflow/internal/analysis
+cpu: AMD Ryzen 9 5980HX with Radeon Graphics        
+BenchmarkProcess/lines=10000/ips=1/workers=1-4         	       3	  38811467 ns/op	  29.09 MB/s	    257658 records/s	 8133920 B/op	  102035 allocs/op
+BenchmarkProcess/lines=10000/ips=1/workers=1-4         	       3	  39826367 ns/op	  28.35 MB/s	    251093 records/s	 8131877 B/op	  102032 allocs/op
+BenchmarkProcess/lines=10000/ips=1/workers=1-4         	       3	  39163600 ns/op	  28.82 MB/s	    255341 records/s	 8132130 B/op	  102032 allocs/op
+BenchmarkProcess/lines=10000/ips=1/workers=4-4         	       3	  14825733 ns/op	  76.14 MB/s	    674518 records/s	 8147541 B/op	  102176 allocs/op
+BenchmarkProcess/lines=10000/ips=1/workers=4-4         	       3	  15161633 ns/op	  74.46 MB/s	    659574 records/s	 8143258 B/op	  102164 allocs/op
+BenchmarkProcess/lines=10000/ips=1/workers=4-4         	       3	  14896933 ns/op	  75.78 MB/s	    671294 records/s	 8142549 B/op	  102157 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=1-4     	       3	 395379667 ns/op	  28.95 MB/s	    252922 records/s	85044264 B/op	 1049528 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=1-4     	       3	 397833400 ns/op	  28.77 MB/s	    251362 records/s	85043954 B/op	 1049527 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=1-4     	       3	 395160367 ns/op	  28.96 MB/s	    253062 records/s	85044520 B/op	 1049533 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=4-4     	       3	 155197800 ns/op	  73.74 MB/s	    644341 records/s	85120946 B/op	 1050721 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=4-4     	       3	 157462233 ns/op	  72.68 MB/s	    635075 records/s	85121930 B/op	 1050730 allocs/op
+BenchmarkProcess/lines=100000/ips=1000/workers=4-4     	       3	 160594367 ns/op	  71.27 MB/s	    622688 records/s	85122170 B/op	 1050722 allocs/op
+PASS
+ok  	github.com/theprideofwolves/logflow/internal/analysis	8.135s

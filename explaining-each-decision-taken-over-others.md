@@ -15,7 +15,7 @@ for full-page forms and serialized actions. Revisit after measured user need.
 
 Alternatives deferred: ServiceNow adapters, cloud hosting, user accounts, automatic
 remediation, generalized rule engines and AI. They expand operational scope without
-improving the two selected workflows. Revisit only with a specific requirement.
+improving the focused investigation workflow. Revisit only with a specific requirement.
 
 Performance tradeoffs: bounds are intentional; startup and real-workload latency
 must be measured before making claims. Source and tests are authoritative.
@@ -33,3 +33,19 @@ complete analysis, because input rejection/limits must remain visible.
 
 Use Referrer-Policy same-origin so normal local browser form posts preserve a
 valid Origin while foreign and opaque origins remain rejected by request guards.
+
+## Sensitivity and evasion decisions
+
+Use retained evidence rather than buffering or reopening the original log: bounded
+memory, stdin compatibility and no additional raw-log retention. The cost is a
+strictly local claim. A higher-threshold unsupported cell must never be presented
+as proof that the full input would stop alerting.
+
+Use a fixed neighborhood rather than an unrestricted rule search: at most nine
+comparisons, no tuning to a desired result. Omit candidates outside valid bounds.
+Use inclusive boundaries identical to Process. No synthetic confidence percentage.
+
+Use deterministic synthetic replays through Process rather than a separate toy
+detector. Include a benign alerting scenario to expose the predicate's inability
+to establish intent. Do not claim attack-classification accuracy from four fixtures.
+Keep replay read-only and separate from persistence and Jira handoff.

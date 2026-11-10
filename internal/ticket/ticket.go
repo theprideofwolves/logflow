@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -67,11 +68,17 @@ func (s *Store) save() error {
 	return os.Rename(f.Name(), s.File)
 }
 func Origin(raw string) (string, error) {
-	u, e := url.Parse(raw)
-	if e != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Path != "" && u.Path != "/" {
+	u, e := url.Parse(strings.TrimSpace(raw))
+	if e != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.ForceQuery || u.RawQuery != "" || u.Fragment != "" || u.Path != "" && u.Path != "/" {
 		return "", errors.New("enter an HTTPS Jira origin without path or embedded credentials")
 	}
-	return strings.TrimSuffix(raw, "/"), nil
+	host := strings.ToLower(u.Hostname())
+	if port := u.Port(); port != "" && port != "443" {
+		host = net.JoinHostPort(host, port)
+	} else if strings.Contains(host, ":") {
+		host = "[" + host + "]"
+	}
+	return "https://" + host, nil
 }
 
 var issueKey = regexp.MustCompile(`^[A-Z][A-Z0-9_]*-[0-9]+$`)
@@ -131,7 +138,25 @@ func (s *Store) Handoff(ctx context.Context, c Config, id, title, body, link str
 	if c.Email == "" || c.Token == "" {
 		return "", errors.New("Jira email and API token required")
 	}
-	id = c.Origin + "|" + id
+	// Preserve duplicate protection for history saved with older origin spelling.
+	canonicalID := c.Origin + "|" + id
+	matched := false
+	for existing := range s.Records {
+		origin, finding, ok := strings.Cut(existing, "|")
+		if !ok || finding != id {
+			continue
+		}
+		normalized, err := Origin(origin)
+		if err != nil || normalized != c.Origin {
+			continue
+		}
+		if matched {
+			return "", errors.New("multiple delivery records for this origin; reconcile local history before sending")
+		}
+		canonicalID = existing
+		matched = true
+	}
+	id = canonicalID
 	old := s.Records[id]
 	if link != "" {
 		if !issueKey.MatchString(link) {
@@ -185,5 +210,3 @@ func (s *Store) Handoff(ctx context.Context, c Config, id, title, body, link str
 	}
 	return "Created " + key, nil
 }
-
-const Form = `<section><h2>Jira handoff</h2><p>Review the selected record before sending. Sends only the disclosed finding/alert summary and correlation ID. Tokens are used for this request and never saved. Creates once; linked issues receive evidence comments. No automatic ticket closure. Inspect Jira before retrying an uncertain comment.</p><label>Jira origin<input name="jira" placeholder="https://team.atlassian.net" required></label><label>Email<input name="email" type="email" required autocomplete="off"></label><label>API token<input name="secret" type="password" required autocomplete="off"></label><label>Project<input name="project" placeholder="SEC"></label><label>Issue type<input name="kind" value="Task"></label><label>Existing key (optional; validates and links instead of creating)<input name="link" placeholder="SEC-123"></label><button name="action" value="ticket">Send reviewed record / link issue</button></section>`

@@ -1,3 +1,11 @@
+# Local unreleased changes
+
+New investigations include evidence-only threshold/window sensitivity. Offline
+replay demonstrates slow/distributed blind spots and a benign alerting pattern.
+These are bounded evidence comparisons and synthetic behavior checks, not
+confidence scores, full-file reruns or measured field detection accuracy.
+Existing reports remain readable. No live Jira validation is claimed.
+
 # LogFlow v1.2.1
 
 Portable single-user log investigation for Windows/Linux: ordered JSONL analysis,

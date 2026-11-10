@@ -1,3 +1,10 @@
+# Unreleased
+
+- Add bounded, evidence-only threshold/window sensitivity to new alerts and JSON export.
+- Add offline concentrated/slow/distributed/benign authentication replay via CLI and UI.
+- Document evidence scope, benign alerts, evasion blind spots and interview tradeoffs.
+- Retain backward compatibility for saved reports without sensitivity fields.
+
 # v1.2.1
 
 Removed unrelated onboarding text and unused folder/setup code. Made CI smoke

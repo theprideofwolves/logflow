@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/theprideofwolves/logflow/internal/analysis"
 	"io"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/theprideofwolves/logflow/internal/analysis"
 )
 
 func run(args []string, out, errs io.Writer) int {
@@ -18,13 +19,35 @@ func run(args []string, out, errs io.Writer) int {
 	window := fs.Duration("window", 10*time.Minute, "Inclusive event-time window")
 	threshold := fs.Int("threshold", 6, "Failures needed to alert")
 	workers := fs.Int("workers", 4, "Parser workers 1-32")
+	replay := fs.Bool("replay", false, "Run offline synthetic detection and evasion scenarios")
 	if e := fs.Parse(args); e != nil {
 		if e == flag.ErrHelp {
 			return 0
 		}
 		return 2
 	}
-	if fs.NArg() > 1 {
+	if *replay {
+		if fs.NArg() != 0 || fs.NFlag() != 1 {
+			fmt.Fprintln(errs, "-replay must be used alone")
+			return 2
+		}
+		results, err := analysis.Replay(context.Background())
+		if err != nil {
+			fmt.Fprintln(errs, err)
+			return 2
+		}
+		if err = json.NewEncoder(out).Encode(results); err != nil {
+			fmt.Fprintln(errs, err)
+			return 2
+		}
+		for _, r := range results {
+			if !r.MatchesExpectation {
+				return 2
+			}
+		}
+		return 0
+	}
+	if fs.NArg() != 1 {
 		fmt.Fprintln(errs, "one JSONL file or - for stdin required")
 		return 2
 	}

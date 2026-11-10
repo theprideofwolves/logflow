@@ -1,0 +1,17 @@
+<section aria-label="Getting started">
+  <h2>{{if .Ready}}Your first result is ready{{else if .Done}}Welcome back{{else}}Your first task{{end}}</h2>
+  {{if .Demo}}
+  <p><strong>Guided demo - synthetic data.</strong> {{.Expected}}</p>
+  {{else if .Done}}
+  <p>Your latest investigation is saved locally. Export it before replacing it.</p>
+  {{else}}
+  <p>Upload ordered JSONL, analyze it, then inspect the alert evidence.</p>
+  {{end}}
+  {{if .Ready}}
+  <p>{{.Next}}</p>
+  <p><a href="#results">Review my result</a></p>
+  {{end}}
+  {{if .Warning}}<p role="status">{{.Warning}}</p>{{end}}
+  <a href="/welcome?token={{.Token}}">Restart the guide</a> |
+  <a href="/setup?token={{.Token}}">Use my data / setup checks</a>
+</section>

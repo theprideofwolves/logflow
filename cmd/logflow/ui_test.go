@@ -2,16 +2,65 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"github.com/theprideofwolves/logflow/internal/analysis"
-	"github.com/theprideofwolves/logflow/internal/ticket"
 	"mime/multipart"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/theprideofwolves/logflow/internal/analysis"
+	"github.com/theprideofwolves/logflow/internal/ticket"
 )
+
+func TestIncompleteResultsVisible(t *testing.T) {
+	for _, cancelled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "line limit", true: "cancelled"}[cancelled], func(t *testing.T) {
+			dir := t.TempDir()
+			store, err := ticket.Open(filepath.Join(dir, "tickets.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := newUI(dir, "token", store, saved{})
+			var body bytes.Buffer
+			m := multipart.NewWriter(&body)
+			m.WriteField("action", "analyze")
+			m.WriteField("threshold", "6")
+			m.WriteField("window", "10m")
+			f, err := m.CreateFormFile("logs", "synthetic.jsonl")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cancelled {
+				f.Write([]byte(analysis.Demo()))
+			} else {
+				f.Write([]byte(strings.Repeat("x", 2<<20)))
+			}
+			m.Close()
+			r := httptest.NewRequest("POST", "http://localhost/?token=token", &body)
+			r.Header.Set("Content-Type", m.FormDataContentType())
+			if cancelled {
+				ctx, cancel := context.WithCancel(r.Context())
+				cancel()
+				r = r.WithContext(ctx)
+			}
+			out := httptest.NewRecorder()
+			h.ServeHTTP(out, r)
+			reason := "line exceeds 1 MiB"
+			if cancelled {
+				reason = "cancelled; partial evidence"
+			}
+			if out.Code != 200 || !strings.Contains(out.Body.String(), "Complete: false") || !strings.Contains(out.Body.String(), reason) || !strings.Contains(out.Body.String(), "partial-prefix:") {
+				t.Fatal(out.Code, out.Body.String())
+			}
+			if _, err := os.Stat(filepath.Join(dir, "onboarding.json")); !os.IsNotExist(err) {
+				t.Fatal("incomplete analysis marked guide complete", err)
+			}
+		})
+	}
+}
 
 func TestOwnLogUploadAndCompletionBoundary(t *testing.T) {
 	for _, partial := range []bool{false, true} {
@@ -76,7 +125,7 @@ func TestDemoPersistenceExportAndIsolation(t *testing.T) {
 	r.Header.Set("Content-Type", m.FormDataContentType())
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "SYNTHETIC") || !strings.Contains(w.Body.String(), "background:#0b1627") {
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "SYNTHETIC") || !strings.Contains(w.Body.String(), `data-theme="light"`) {
 		t.Fatal(w.Body.String())
 	}
 	data, e := os.ReadFile(filepath.Join(dir, "report.json"))

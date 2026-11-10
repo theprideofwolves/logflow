@@ -6,12 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/theprideofwolves/logflow/internal/parser"
 	"io"
 	"net/netip"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/theprideofwolves/logflow/internal/parser"
 )
 
 type Options struct {
@@ -33,10 +34,11 @@ type Evidence struct {
 	Message, SourceIP string
 }
 type Alert struct {
-	ID, IP     string
-	Start, End time.Time
-	Count      int
-	Evidence   []Evidence
+	ID, IP      string
+	Start, End  time.Time
+	Count       int
+	Evidence    []Evidence
+	Sensitivity []SensitivityCell
 }
 type Rejection struct {
 	Line   int
@@ -73,6 +75,16 @@ func Process(ctx context.Context, input io.Reader, o Options) (*Report, error) {
 	states := map[string]*stream{}
 	var last time.Time
 	var sweep time.Time
+	prune := func(cutoff time.Time) {
+		for ip, s := range states {
+			for len(s.events) > 0 && s.events[0].Timestamp.Before(cutoff) {
+				s.events = s.events[1:]
+			}
+			if len(s.events) == 0 {
+				delete(states, ip)
+			}
+		}
+	}
 	reject := func(line int, reason string) {
 		r.Rejected++
 		r.Complete = false
@@ -145,18 +157,16 @@ func Process(ctx context.Context, input io.Reader, o Options) (*Report, error) {
 			}
 			cutoff := e.Timestamp.Add(-o.Window)
 			if sweep.IsZero() || e.Timestamp.Sub(sweep) >= time.Second {
-				for ip, s := range states {
-					for len(s.events) > 0 && s.events[0].Timestamp.Before(cutoff) {
-						s.events = s.events[1:]
-					}
-					if len(s.events) == 0 {
-						delete(states, ip)
-					}
-				}
+				prune(cutoff)
 				sweep = e.Timestamp
 			}
 			s := states[e.SourceIP]
 			if s == nil {
+				// Periodic cleanup is an optimization, not a capacity decision.
+				// Expire stale IPs at this exact event time before rejecting input.
+				if len(states) >= o.MaxIPs {
+					prune(cutoff)
+				}
 				if len(states) >= o.MaxIPs {
 					r.Complete = false
 					r.Limit = "active IP limit reached; narrow scope or increase configured limit"
@@ -185,7 +195,7 @@ func Process(ctx context.Context, input io.Reader, o Options) (*Report, error) {
 				}
 				start := s.events[0].Timestamp
 				id := sha256.Sum256([]byte(fmt.Sprintf("%s|%s|%s|%d|%s", e.SourceIP, start.Format(time.RFC3339Nano), e.Timestamp.Format(time.RFC3339Nano), o.Threshold, o.Window)))
-				r.Alerts = append(r.Alerts, Alert{hex.EncodeToString(id[:]), e.SourceIP, start, e.Timestamp, len(s.events), append([]Evidence(nil), s.events...)})
+				r.Alerts = append(r.Alerts, Alert{ID: hex.EncodeToString(id[:]), IP: e.SourceIP, Start: start, End: e.Timestamp, Count: len(s.events), Evidence: append([]Evidence(nil), s.events...)})
 				s.alerted = true
 			}
 		}
@@ -200,6 +210,7 @@ func Process(ctx context.Context, input io.Reader, o Options) (*Report, error) {
 	}
 	// Final alert identity includes input evidence identity and rule configuration.
 	for i := range r.Alerts {
+		r.Alerts[i].Sensitivity = Sensitivity(r.Alerts[i].Evidence, o)
 		v := sha256.Sum256([]byte(r.InputHash + "|" + r.Alerts[i].ID))
 		r.Alerts[i].ID = hex.EncodeToString(v[:])
 	}

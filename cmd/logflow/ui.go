@@ -1,12 +1,9 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/theprideofwolves/logflow/internal/analysis"
-	"github.com/theprideofwolves/logflow/internal/desktop"
-	"github.com/theprideofwolves/logflow/internal/onboarding"
-	"github.com/theprideofwolves/logflow/internal/ticket"
 	"html/template"
 	"io"
 	"net/http"
@@ -16,6 +13,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/theprideofwolves/logflow/internal/analysis"
+	"github.com/theprideofwolves/logflow/internal/desktop"
+	"github.com/theprideofwolves/logflow/internal/onboarding"
+	"github.com/theprideofwolves/logflow/internal/ticket"
 )
 
 type saved struct {
@@ -70,11 +72,25 @@ func launchUI() error {
 func newUI(dir, token string, tickets *ticket.Store, current saved) http.Handler {
 	guide := onboarding.New(onboarding.Config{Name: "LogFlow", Token: token, Dir: dir, Jira: true, Multipart: true, Intro: "Turn repeated failed logins into a traceable investigation.", Expected: "Expect one alert for 192.0.2.10 with six contributing failed-login events. These are synthetic records, not a confirmed attack.", Next: "Open the contributing events, export the investigation, then upload your own ordered JSONL file. Jira handoff is optional.", Steps: []string{"No account is needed for local analysis. Download the example to see one JSON object per line.", "Your file needs timestamp, level and message; source_ip is needed for this rule. Sort by nondecreasing timestamp before upload.", "Open the workspace, select a file and leave the default six failures / ten-minute window for your first run.", "Review completeness and rejected records before interpreting the alerts. Jira is optional."}, DemoFields: map[string]string{"action": "demo"}, Samples: []onboarding.Sample{{Name: "example-logs.jsonl", Content: analysis.Demo()}}})
 	var mu sync.Mutex
-	tmpl := template.Must(template.New("page").Funcs(template.FuncMap{"onboarding": guide.Panel}).Parse(strings.ReplaceAll(logflowHTML, "STYLE", desktop.Style)))
+	tmpl := template.Must(template.New("page").Funcs(template.FuncMap{"onboarding": guide.Panel}).Parse(desktop.ThemeControl + strings.ReplaceAll(logflowHTML, "STYLE", desktop.Style)))
 	return guide.Wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
 		message := ""
+		if r.URL.Path == "/replay" {
+			if r.Method != "GET" {
+				http.Error(w, "GET required", 405)
+				return
+			}
+			results, err := analysis.Replay(r.Context())
+			if err != nil {
+				http.Error(w, "Replay failed", 500)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(results)
+			return
+		}
 		if r.URL.Path == "/export" {
 			if r.Method != "GET" || current.Report == nil {
 				http.Error(w, "Analyze input first", 400)
@@ -168,10 +184,12 @@ func newUI(dir, token string, tickets *ticket.Store, current saved) http.Handler
 		}
 		tmpl.Execute(w, struct {
 			Token, Message string
+			Theme, Path    string
 			Saved          saved
 			Tickets        map[string]ticket.Record
-		}{token, message, current, tickets.Records})
+		}{token, message, desktop.Theme(r), "/", current, tickets.Records})
 	}))
 }
 
-const logflowHTML = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LogFlow</title><style>STYLE</style><h1>LogFlow</h1>{{onboarding}}<p>One focused failed-login signal. Traceable investigation evidence.</p><p class="notice">Rule: message exactly equals "Failed login attempt" and source IP is valid. ERROR level alone does not count. Input must be in nondecreasing event-time order. Out-of-order records are rejected and completeness becomes false. Window boundaries are inclusive.</p>{{if .Message}}<p role="status">{{.Message}}</p>{{end}}<section><h2>Analyze JSONL</h2><form method="post" enctype="multipart/form-data" action="/?token={{.Token}}"><label>Log file (up to 128 MiB request)<input type="file" name="logs" accept=".jsonl,.ndjson,.json"></label><label>Failure threshold<input name="threshold" type="number" min="2" max="100" value="6"></label><label>Window<input name="window" value="10m"></label><button name="action" value="analyze">Analyze and save</button><button formaction="/?token={{.Token}}&onboarding=demo" name="action" value="demo">Run synthetic demo</button></form><p>Required fields: timestamp, level, message. Source IP is required for this rule. One JSON object per line. Each repeated input line counts as an observation; normalize source duplicates before import.</p></section>{{if .Saved.Report}}<section id="results"><h2>Investigation {{if .Saved.Demo}}(SYNTHETIC){{end}}</h2><p>Complete: {{.Saved.Report.Complete}} · Accepted: {{.Saved.Report.Accepted}} · Rejected: {{.Saved.Report.Rejected}} · Missing IP: {{.Saved.Report.Unattributed}} · Processed lines: {{.Saved.Report.Lines}}</p><p>{{.Saved.Report.Limit}}</p><small>Input identity: {{.Saved.Report.InputHash}}</small><p><a href="/export?token={{.Token}}">Export saved investigation JSON</a></p>{{range .Saved.Report.Rejections}}<p>Line {{.Line}}: {{.Reason}}</p>{{end}}<small>At most 1000 rejection details are retained; total rejected count remains accurate. Scan errors/limits can leave an unread suffix.</small></section><section><h2>Alerts and contributing events</h2>{{range .Saved.Report.Alerts}}<article><h3>{{.IP}} · {{.Count}} failures at trigger</h3><p>{{.Start}} to {{.End}}</p><table><tr><th>Line</th><th>Timestamp</th><th>Event</th></tr>{{range .Evidence}}<tr><td>{{.Line}}</td><td>{{.Timestamp}}</td><td>{{.Message}}</td></tr>{{end}}</table><small>One alert per active threshold episode; another can occur after the count falls below threshold. Evidence is the trigger window, not every subsequent event.</small><details><summary>Create reviewed Jira investigation</summary><form method="post" enctype="multipart/form-data" action="/?token={{$.Token}}"><input type="hidden" name="id" value="{{.ID}}"><p>Sends IP, count, time range, rule window, input hash and completeness only. No raw log messages, usernames or paths.</p><section><h2>Jira handoff</h2><p>Review the selected record before sending. Sends only the disclosed finding/alert summary and correlation ID. Tokens are used for this request and never saved. Creates once; linked issues receive evidence comments. No automatic ticket closure. Inspect Jira before retrying an uncertain comment.</p><label>Jira origin<input name="jira" placeholder="https://team.atlassian.net" required></label><label>Email<input name="email" type="email" required autocomplete="off"></label><label>API token<input name="secret" type="password" required autocomplete="off"></label><label>Project<input name="project" placeholder="SEC"></label><label>Issue type<input name="kind" value="Task"></label><label>Existing key (optional; validates and links instead of creating)<input name="link" placeholder="SEC-123"></label><button name="action" value="ticket">Send reviewed record / link issue</button></section></form></details></article>{{else}}<p>No alerts under this rule. This does not establish absence of threats.</p>{{end}}</section>{{end}}<section><h2>Ticket delivery records</h2>{{range $id,$v:=.Tickets}}<p><small>{{$id}}: {{$v.Key}} ({{$v.State}})</small></p>{{else}}<p>No deliveries.</p>{{end}}</section><small>Latest analysis persists locally; export before replacing it. No source logs are copied to storage. Ctrl+C in launcher stops the app.</small></html>`
+//go:embed workspace.html
+var logflowHTML string

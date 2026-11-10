@@ -16,14 +16,25 @@ jobs:
         with:
           go-version: '1.25.5'
       - run: go vet ./...
-      - run: go test -race -count=1 ./...
+      - run: go test -race -count=1 '-coverprofile=coverage.out' ./...
       - run: go build -trimpath -o dist/logflow${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/logflow
       - name: Packaged workflow smoke test
         run: python .github/scripts/smoke.py dist/logflow${{ runner.os == 'Windows' && '.exe' || '' }}
+      - name: Record synthetic benchmark samples
+        run: |
+          go test ./internal/analysis -run '^$' -bench '^BenchmarkProcess$' -benchmem -benchtime=3x -count=3 | Tee-Object -FilePath benchmarks.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        if: runner.os == 'Windows'
+      - name: Record synthetic benchmark samples (Linux)
+        run: go test ./internal/analysis -run '^$' -bench '^BenchmarkProcess$' -benchmem -benchtime=3x -count=3 | tee benchmarks.txt
+        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v4
         with:
           name: logflow-${{ runner.os }}
-          path: dist/
+          path: |
+            dist/
+            coverage.out
+            benchmarks.txt
   release:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
     needs: test
@@ -43,7 +54,8 @@ jobs:
             mkdir -p "package-$os"
             GOOS=$os GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o "package-$os/logflow$ext" ./cmd/logflow
             go version -m "package-$os/logflow$ext" > "package-$os/dependencies.txt"
-            cp README.md RELEASE.md architecture.md interviewprep.md explaining-each-decision-taken-over-others.md "package-$os/"
+            cp README.md TESTING.md RELEASE.md architecture.md interviewprep.md explaining-each-decision-taken-over-others.md "package-$os/"
+            cp -r docs "package-$os/"
             (cd "package-$os" && zip -r "../release/logflow-$os-x64.zip" .)
           done
           (cd release && sha256sum *.zip > SHA256SUMS)

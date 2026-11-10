@@ -94,3 +94,39 @@ func TestRejectDetailCap(t *testing.T) {
 		t.Fatal(r, e)
 	}
 }
+
+func TestDefaultRuleSyntheticScenarios(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		times   []int
+		message string
+		alerts  int
+	}{
+		{"inclusive ten minutes", []int{0, 120, 240, 360, 480, 600}, "Failed login attempt", 1},
+		{"below six", []int{0, 120, 240, 360, 480}, "Failed login attempt", 0},
+		{"expired first event", []int{0, 120, 240, 360, 480, 601}, "Failed login attempt", 0},
+		{"generic errors", []int{0, 120, 240, 360, 480, 600}, "database unavailable", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var input strings.Builder
+			for _, sec := range tc.times {
+				input.WriteString(event(sec, "192.0.2.10", tc.message))
+			}
+			r, err := Process(context.Background(), strings.NewReader(input.String()), DefaultOptions())
+			if err != nil || !r.Complete || r.Accepted != len(tc.times) || len(r.Alerts) != tc.alerts {
+				t.Fatalf("report=%+v err=%v", r, err)
+			}
+			if tc.alerts == 1 {
+				a := r.Alerts[0]
+				if a.IP != "192.0.2.10" || a.Count != 6 || len(a.Evidence) != 6 || a.End.Sub(a.Start) != 10*time.Minute {
+					t.Fatal(a)
+				}
+				for i, evidence := range a.Evidence {
+					if evidence.Line != i+1 || evidence.SourceIP != a.IP || evidence.Message != tc.message || evidence.Timestamp.Unix() != int64(tc.times[i]) {
+						t.Fatal(evidence)
+					}
+				}
+			}
+		})
+	}
+}

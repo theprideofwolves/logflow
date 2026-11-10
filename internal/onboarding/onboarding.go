@@ -4,6 +4,7 @@ package onboarding
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/theprideofwolves/logflow/internal/desktop"
 )
 
 type Sample struct{ Name, Content string }
@@ -98,7 +101,10 @@ func (w *Wizard) Panel() template.HTML {
 	return template.HTML(b.String())
 }
 
-var panel = template.Must(template.New("panel").Parse(`<section aria-label="Getting started"><h2>{{if .Ready}}Your first result is ready{{else if .Done}}Welcome back{{else}}Your first task{{end}}</h2>{{if .Demo}}<p><strong>Guided demo - synthetic data.</strong> {{.Expected}}</p>{{else}}<p>Choose your input, run the task, then review the result and export it.</p>{{end}}<ol><li>Choose demo or your own data.</li><li>Run the task and inspect its explanation.</li><li>Export your result, then choose the next action.</li></ol>{{if .Ready}}<p><strong>Next:</strong> {{.Next}}</p><p><a href="#results">Review my result</a></p>{{else if .Done}}<p>Your guide progress is remembered. Run a new task, or review results saved by this application.</p>{{end}}{{if .Warning}}<p role="status">{{.Warning}}</p>{{end}}<a href="/welcome?token={{.Token}}">Restart the guide</a> | <a href="/setup?token={{.Token}}">Use my data / setup checks</a></section>`))
+//go:embed panel.html
+var panelHTML string
+
+var panel = template.Must(template.New("panel").Parse(panelHTML))
 
 func (w *Wizard) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(out http.ResponseWriter, r *http.Request) {
@@ -123,6 +129,9 @@ func (w *Wizard) Wrap(next http.Handler) http.Handler {
 				http.Error(out, "Cross-site request blocked", 403)
 				return
 			}
+		}
+		if desktop.HandleTheme(out, r) {
+			return
 		}
 		path := r.URL.Path
 		if path == "/onboarding/sample" {
@@ -183,7 +192,7 @@ func (w *Wizard) Wrap(next http.Handler) http.Handler {
 			if err != nil {
 				message = err.Error()
 			}
-			w.render(out, true, message, ok)
+			w.render(out, r, true, message, ok)
 			return
 		}
 		w.mu.Lock()
@@ -194,7 +203,7 @@ func (w *Wizard) Wrap(next http.Handler) http.Handler {
 				http.Error(out, "GET required", 405)
 				return
 			}
-			w.render(out, path == "/setup", "", false)
+			w.render(out, r, path == "/setup", "", false)
 			return
 		}
 		if path == "/" && r.Method == "POST" {
@@ -207,13 +216,18 @@ func (w *Wizard) Wrap(next http.Handler) http.Handler {
 		next.ServeHTTP(out, r)
 	})
 }
-func (w *Wizard) render(out http.ResponseWriter, setup bool, message string, ok bool) {
+func (w *Wizard) render(out http.ResponseWriter, r *http.Request, setup bool, message string, ok bool) {
+	path := "/welcome"
+	if setup {
+		path = "/setup"
+	}
 	w.mu.Lock()
 	data := struct {
-		C         Config
-		Setup, OK bool
-		Message   string
-	}{w.c, setup, ok, message}
+		C                  Config
+		Setup, OK          bool
+		Message            string
+		Theme, Token, Path string
+	}{w.c, setup, ok, message, desktop.Theme(r), w.c.Token, path}
 	w.mu.Unlock()
 	out.Header().Set("Content-Type", "text/html; charset=utf-8")
 	welcome.Execute(out, data)
@@ -257,6 +271,7 @@ func CheckJira(ctx context.Context, client *http.Client, origin, email, secret s
 	return "Jira sign-in works. No ticket was created. Project creation/comment permissions are checked separately when you send a LogFlow alert. Re-enter your token at handoff; it was not saved.", nil
 }
 
-const style = `body{font:16px system-ui;background:#0b1627;color:#e4edf8;max-width:1000px;margin:40px auto;padding:0 24px}section{background:#18293e;padding:24px;border:1px solid #344a64;border-radius:12px;margin:20px 0}h1{font-size:38px}p,li{line-height:1.7}small{color:#b8cce0}input{display:block;width:92%;max-width:700px;background:#0b1627;color:white;border:1px solid #8ba3bd;padding:12px;border-radius:6px;margin:8px 0}label{display:block;margin:16px 0}button{background:#92e5c0;color:#102332;font-weight:700;padding:13px 18px;border:0;border-radius:6px;cursor:pointer;margin:8px 8px 8px 0}a{color:#a3d2ff}.notice{padding:18px;background:#29415b;border-radius:8px}.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}pre{white-space:pre-wrap;overflow-wrap:anywhere}`
+//go:embed welcome.html
+var welcomeHTML string
 
-var welcome = template.Must(template.New("welcome").Parse(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Get started - {{.C.Name}}</title><style>` + style + `</style><main><small>GETTING STARTED</small><h1>Welcome to {{.C.Name}}</h1><p>{{.C.Intro}}</p><p class="notice">Start with a safe offline example, or use data you are authorized to review. Setup checks never create tickets or change your source data.</p>{{if .Message}}<p role="status" class="notice">{{if .OK}}Check completed: {{else}}Needs attention: {{end}}{{.Message}}</p>{{end}}{{if not .Setup}}<div class="choices"><section><h2>Try the demo</h2><p>No accounts or credentials needed. {{.C.Expected}}</p><form method="post" {{if .C.Multipart}}enctype="multipart/form-data"{{end}} action="/?token={{.C.Token}}&onboarding=demo">{{range $k,$v:=.C.DemoFields}}<input type="hidden" name="{{$k}}" value="{{$v}}">{{end}}<button>Try the guided demo</button></form></section><section><h2>Use my data</h2><p>Check the input requirements and available connections before your first task.</p><a href="/setup?token={{.C.Token}}">Set up my workspace</a></section></div>{{else}}<section><h2>Set up your first task</h2><ol>{{range .C.Steps}}<li>{{.}}</li>{{end}}</ol>{{range .C.Samples}}<p><a href="/onboarding/sample?token={{$.C.Token}}&name={{.Name}}">Download example {{.Name}}</a></p>{{end}}<form method="post" action="/onboarding/start?token={{.C.Token}}"><input type="hidden" name="mode" value="own"><button>Open my workspace</button><small>You can continue without a setup check; that does not mark a connection as verified.</small></form></section>{{if .C.Jira}}<section><h2>Optional: test Jira sign-in</h2><p>Skip this if you only want local results. This makes one read-only identity request. It does not verify project permissions, create a ticket, or save your credentials.</p><form method="post" action="/setup/check?token={{.C.Token}}"><label>Jira site<input name="jira" placeholder="https://team.atlassian.net" required></label><label>Jira email<input name="email" type="email" required autocomplete="off"></label><label>API token<input name="secret" type="password" required autocomplete="off"></label><button name="check" value="jira">Test Jira sign-in - no ticket</button></form><p>For handoff, you also need a project key and issue type that your account may create/comment on. Check these with your Jira administrator.</p></section>{{end}}{{end}}<section><h2>Already have results?</h2><form method="post" action="/onboarding/start?token={{.C.Token}}"><input type="hidden" name="mode" value="resume"><button>Continue to existing workspace</button></form><p>Restarting this guide does not delete or reset saved results.</p></section><p>Close the application with Ctrl+C in its launcher console. Closing only the browser leaves it running.</p></main></html>`))
+var welcome = template.Must(template.New("welcome").Parse(desktop.ThemeControl + strings.ReplaceAll(welcomeHTML, "STYLE", desktop.Style)))

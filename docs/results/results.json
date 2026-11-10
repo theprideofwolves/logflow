@@ -1,0 +1,594 @@
+{
+  "date": "2026-11-10",
+  "source_base_commit": "85d0ef16f1481f8edefe9481047f7666497c8ee4",
+  "source_code_sha256_lf_normalized": "b7905909063f2115d408e177e523efd8e3762c2c8a026af8c96240c14b359890",
+  "source_manifest": {
+    ".github/scripts/smoke.py": "37b223bd70c6a4808e982c28694c07c87cd4a7f823498fd405f78dc453993470",
+    ".github/workflows/go.yml": "c7109bf805caed3ce6bae5804b5500607da12e64514e60e70b612ca0410e722e",
+    "cmd/logflow/edge_test.go": "6bdf1ce6e2c910e3670c05b8acc46803d365b8a54def88d1c04d4ea0b76a439a",
+    "cmd/logflow/main.go": "3e8920615329a58d7ca35f790345d115d5f153c5de46add11035aa94828f598d",
+    "cmd/logflow/main_test.go": "847afa8c6fdc85e345e25ccf34fbac90db6637175bdd7b8edfb67016239fec45",
+    "cmd/logflow/replay_test.go": "8f133c655968cdf038abe05e9d4926c09fafae6e435132bcd132b6fb85dbfb97",
+    "cmd/logflow/ui.go": "6db96e74ed81a107a15259e1b825b1a5f3931c12a8e181c5658fc92b16a96347",
+    "cmd/logflow/ui_test.go": "4fe47c6a559140e071fb681a5469ff030a45fe94058a8074330c2490ad2294dc",
+    "cmd/logflow/workspace.html": "cb0681af7403041423e1185bcbdbc82b8723e040185215f42f861525607b4550",
+    "go.mod": "ea30264e9b248372b7abe11f9e7514e38981fe70f9b643c00356465fe09b50c8",
+    "internal/analysis/benchmark_test.go": "3176fe15e621e2b65ad43d66f644ddf3ea7ddca513587b980c0b793dc778cd46",
+    "internal/analysis/edge_test.go": "fb29f216ae313ab8c59d9f28bc082b229beffbb0b53324f14ead07b2ee7bdecc",
+    "internal/analysis/engine.go": "64c9a9801bfed45e23b653c907784884aaae279e2d8ae5da3ea030f9ebc2a433",
+    "internal/analysis/engine_test.go": "2df0cc2c4392b3bf37562c5add3edfc4262a846ad6cd2b25778921e26d8eb369",
+    "internal/analysis/replay.go": "db8d22696d16cee4e18ac46e372c787fd61932aea4ba312cce27609c8314eb19",
+    "internal/analysis/sensitivity.go": "aa740384c7de4ae2535e3d23b2be4a04b0bca86246b82defbfc79ed90d0f9e36",
+    "internal/analysis/sensitivity_test.go": "67e2dd271fa6d8614803a1c579db0103424b30055afa7e1c2a7a4903753ee52e",
+    "internal/desktop/desktop.go": "bd975fa1eedace3de9956b59fe7a5413e94df09c32a5df9cb5c2bf228750d191",
+    "internal/desktop/desktop_test.go": "1a0e73443b32b989b0a8b77cf03fd538d018dd7df5077c8d17b0fa066016547e",
+    "internal/desktop/style.css": "d2c518fd922f5bcbbfaa58e2fa6f14800e35471ad63508aa7455b5ef22c72cef",
+    "internal/desktop/style.go": "5441e9adbe0274790c32298de9528ee9ff2e564d42b2aca3d15860975bffb0cd",
+    "internal/desktop/theme.go": "dfc9fa7ece67b3418ccba98470c17703284d24fccbd95e6b67b2fef49e6e2c30",
+    "internal/desktop/theme_test.go": "2e3d69dbe77b6971aad30f5e1c8f5989315e163e58dee85f100fddf4fc39715e",
+    "internal/onboarding/onboarding.go": "1b76c81d8bcecc6307de69cc5f7a75ab6615055412067f08a9bbe1665d91d621",
+    "internal/onboarding/onboarding_test.go": "970b6ca3a7ae927aae873b4ba57e3b3b263046c8eacebad44ce5ac932567f5dd",
+    "internal/onboarding/panel.html": "6e36cf23d8892b972ff30a13193866f26169f0d61208aa8b21a6ef21efef502f",
+    "internal/onboarding/welcome.html": "fc8207eb3b1637ad956c57b6789b9ec0578dbc3212657a0a86580a7fe33a56aa",
+    "internal/parser/json_parser.go": "87f7a6cb74321282926a73365520a266f91e34f15300830ab0ef1be62a678e13",
+    "internal/parser/json_parser_test.go": "a4894692ec528ffd5685c5335bebab83a4c3ec9706a2d05adf35c4f6ab00393a",
+    "internal/ticket/ticket.go": "8acaad984b29af053000728c421f6e92386a82921e861e65d158a79ce967c744",
+    "internal/ticket/ticket_test.go": "2aaa9b069aa55aa6c3fd5169dabbe218c9558c85f5f58572ff758bffe622644e",
+    "tools/verify.py": "eac023000ee487c345446b19c4d8ed1ce976bb8b018eec28f8c1dd6e1224662f"
+  },
+  "source_note": "Measured working tree including this report's accompanying code changes; not the base commit alone.",
+  "environment": {
+    "go": "go version go1.25.5 windows/amd64",
+    "os": "Windows",
+    "os_release": "11",
+    "architecture": "AMD64",
+    "logical_cpus": 16,
+    "GOMAXPROCS": 4,
+    "cpu": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD"
+  },
+  "checks": [
+    {
+      "name": "Race tests and coverage",
+      "command": "go test -race -count=1 -json -coverprofile=<temporary>\\coverage.out ./...",
+      "passed": true
+    },
+    {
+      "name": "Coverage summary",
+      "command": "go tool cover -func=<temporary>\\coverage.out",
+      "passed": true
+    },
+    {
+      "name": "Go vet",
+      "command": "go vet ./...",
+      "passed": true
+    },
+    {
+      "name": "Native build",
+      "command": "go build -trimpath -o <temporary>\\logflow.exe ./cmd/logflow",
+      "passed": true
+    },
+    {
+      "name": "Packaged workflow smoke",
+      "command": "python .github/scripts/smoke.py <temporary>\\logflow.exe",
+      "passed": true
+    },
+    {
+      "name": "Synthetic replay",
+      "command": "<temporary>\\logflow.exe -replay",
+      "passed": true
+    },
+    {
+      "name": "Parser fuzz (15 seconds)",
+      "command": "go test ./internal/parser -run ^$ -fuzz ^FuzzParseLine$ -fuzztime 15s -parallel 2",
+      "passed": true
+    },
+    {
+      "name": "Analysis fuzz (15 seconds)",
+      "command": "go test ./internal/analysis -run ^$ -fuzz ^FuzzProcessReportInvariants$ -fuzztime 15s -parallel 2",
+      "passed": true
+    },
+    {
+      "name": "In-memory benchmarks",
+      "command": "go test ./internal/analysis -run ^$ -bench ^BenchmarkProcess$ -benchmem -benchtime=3x -count=3",
+      "passed": true
+    },
+    {
+      "name": "Linux amd64 cross-build (not executed)",
+      "command": "go build -trimpath -o <temporary>\\logflow-linux ./cmd/logflow",
+      "passed": true
+    }
+  ],
+  "coverage_percent": 77.7,
+  "top_level_tests_passed": 47,
+  "subtests_passed": 55,
+  "passed_tests": [
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestExpiredIPDoesNotConsumeCapacityBetweenSweeps"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage/mapped_IPv4"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage/IPv6_spelling"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage/separate_sources"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage/case_matters"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage/whitespace_matters"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestIPNormalizationAndExactMessage"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestReadFailureAndCancellationDuringInput"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestOrderedRejectionsAndLineAccounting"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestOptionsBoundaries"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWindowBoundariesAndRearm/inclusive"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWindowBoundariesAndRearm/outside"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWindowBoundariesAndRearm/dedup_episode"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWindowBoundariesAndRearm/rearm"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWindowBoundariesAndRearm"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestInvalidAndUnattributed"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestLimitsAndCancellation"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestWorkersDeterministic"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestRejectDetailCap"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestDefaultRuleSyntheticScenarios/inclusive_ten_minutes"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestDefaultRuleSyntheticScenarios/below_six"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestDefaultRuleSyntheticScenarios/expired_first_event"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestDefaultRuleSyntheticScenarios/generic_errors"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestDefaultRuleSyntheticScenarios"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestSensitivityScopeAndInclusiveBoundaries"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestSensitivityBounds"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestSensitivityMatchesIndependentIntervalCounts"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "TestReplayDocumentsBlindSpots"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "FuzzProcessReportInvariants/seed#0"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "FuzzProcessReportInvariants/seed#1"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "FuzzProcessReportInvariants/seed#2"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "FuzzProcessReportInvariants/seed#3"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/analysis",
+      "test": "FuzzProcessReportInvariants"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestLogFlowDataDirectoryOverride"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries/allowed"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries/missing_token"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries/foreign_host"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries/foreign_origin"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries/method"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestRequestBoundaries"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/dark"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/light"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/external_return"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/protocol_relative_return"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/get"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/invalid_theme"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference/oversized"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/desktop",
+      "test": "TestThemePreference"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestInvalidActionsPreserveLatestReport"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestThemesAcrossPagesAndProtectedPreference"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestConcurrentExportsAndDemo"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestSavedTicketTextEscaped"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIRequiresExplicitInput"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIReportsAndExitCodes/empty"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIReportsAndExitCodes/malformed"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIReportsAndExitCodes/missing_fields"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIReportsAndExitCodes"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestReplayCLIAndUI"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestLegacyReportSensitivityHint"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestIncompleteResultsVisible/line_limit"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestIncompleteResultsVisible/cancelled"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestIncompleteResultsVisible"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestOwnLogUploadAndCompletionBoundary/complete"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestOwnLogUploadAndCompletionBoundary/partial"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestOwnLogUploadAndCompletionBoundary"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestDemoPersistenceExportAndIsolation"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/cmd/logflow",
+      "test": "TestCLIExitSemantics"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestFirstRunChoiceAndPersistence"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestSetupOnlyOffersLogInputAndOptionalJira"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestRequestAndSampleBoundaries"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u00c8"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u00c8#01"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u0191"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u0193"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u01ad"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u01f7"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention/\u012e"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestJiraReadOnlyAndNoCredentialRetention"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/onboarding",
+      "test": "TestPreferenceFailures"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/parser",
+      "test": "TestValidation"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/parser",
+      "test": "TestJSONLFieldBoundaries"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/parser",
+      "test": "FuzzParseLine/seed#0"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/parser",
+      "test": "FuzzParseLine/seed#1"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/parser",
+      "test": "FuzzParseLine"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/created"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/invalid_reply"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/invalid_key"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/bad_request"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/unauthorized"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/permission"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/not_found"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/mandatory_field"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/rate_limit"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix/server"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestHandoffFailureMatrix"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestConcurrentHandoffsCreateOnlyOnce"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestPendingIntentReconcilesByExplicitLink"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestLinkValidationAndRedirection"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestCorruptAndUnwritableState"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestLostReplyAndRedirect"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestOriginAliasesShareDuplicateProtection"
+    },
+    {
+      "package": "github.com/theprideofwolves/logflow/internal/ticket",
+      "test": "TestOriginPortsAndConflictingHistory"
+    }
+  ],
+  "skipped_tests": [],
+  "replay": [
+    {
+      "Name": "concentrated failures",
+      "Explanation": "Six failures from one IP within ten minutes support the rule.",
+      "ExpectedAlerts": 1,
+      "ObservedAlerts": 1,
+      "Complete": true,
+      "MatchesExpectation": true
+    },
+    {
+      "Name": "slow attempts",
+      "Explanation": "Six failures spread twelve minutes apart evade this ten-minute window.",
+      "ExpectedAlerts": 0,
+      "ObservedAlerts": 0,
+      "Complete": true,
+      "MatchesExpectation": true
+    },
+    {
+      "Name": "distributed sources",
+      "Explanation": "One failure from each of six IPs evades per-IP aggregation.",
+      "ExpectedAlerts": 0,
+      "ObservedAlerts": 0,
+      "Complete": true,
+      "MatchesExpectation": true
+    },
+    {
+      "Name": "benign repeated failures",
+      "Explanation": "The same failure pattern can arise from a stale client credential; this rule cannot infer intent.",
+      "ExpectedAlerts": 1,
+      "ObservedAlerts": 1,
+      "Complete": true,
+      "MatchesExpectation": true
+    }
+  ],
+  "benchmarks": [
+    {
+      "case": "BenchmarkProcess/lines=10000/ips=1/workers=1-4",
+      "samples": 3,
+      "median_records_per_second": 255341,
+      "min_records_per_second": 251093,
+      "max_records_per_second": 257658,
+      "median_allocated_bytes_per_operation": 8132130,
+      "median_allocations_per_operation": 102032
+    },
+    {
+      "case": "BenchmarkProcess/lines=10000/ips=1/workers=4-4",
+      "samples": 3,
+      "median_records_per_second": 671294,
+      "min_records_per_second": 659574,
+      "max_records_per_second": 674518,
+      "median_allocated_bytes_per_operation": 8143258,
+      "median_allocations_per_operation": 102164
+    },
+    {
+      "case": "BenchmarkProcess/lines=100000/ips=1000/workers=1-4",
+      "samples": 3,
+      "median_records_per_second": 252922,
+      "min_records_per_second": 251362,
+      "max_records_per_second": 253062,
+      "median_allocated_bytes_per_operation": 85044264,
+      "median_allocations_per_operation": 1049528
+    },
+    {
+      "case": "BenchmarkProcess/lines=100000/ips=1000/workers=4-4",
+      "samples": 3,
+      "median_records_per_second": 635075,
+      "min_records_per_second": 622688,
+      "max_records_per_second": 644341,
+      "median_allocated_bytes_per_operation": 85121930,
+      "median_allocations_per_operation": 1050722
+    }
+  ],
+  "limitations": [
+    "Synthetic ordered JSONL only; no field detection accuracy measured.",
+    "Benchmarks exclude fixture generation, disk I/O, UI, JSON export and Jira.",
+    "B/op is total allocated bytes per complete analysis, NOT peak RSS or retained memory.",
+    "Three repeated samples, each with three analyses; not a capacity/SLA claim.",
+    "Visual/accessibility and live Jira checks remain manual and unverified."
+  ]
+}

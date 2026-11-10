@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="{{.Theme}}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Get started - {{.C.Name}}</title><style>STYLE</style>
+</head>
+<body>
+<header>
+<h1>{{.C.Name}}</h1>{{template "theme-control" .}}
+</header>
+<main>
+<h2>Welcome to {{.C.Name}}</h2>
+<p>{{.C.Intro}}</p>
+<p class="notice">Start with a safe offline example, or use data you are authorized to review. Setup checks never create tickets or change your source data.</p>
+{{if .Message}}
+<p role="status" class="notice">
+{{if .OK}}Check completed: 
+{{else}}Needs attention: {{end}}
+{{.Message}}</p>{{end}}
+
+{{if not .Setup}}
+<div class="choices">
+<section>
+<h2>Try the demo</h2>
+<p>No accounts or credentials needed. {{.C.Expected}}</p>
+<form method="post" 
+{{if .C.Multipart}}enctype="multipart/form-data"{{end}}
+ action="/?token={{.C.Token}}&onboarding=demo">
+{{range $k,$v:=.C.DemoFields}}<input type="hidden" name="{{$k}}" value="{{$v}}">{{end}}
+<button>Try the guided demo</button>
+</form>
+</section>
+<section>
+<h2>Use my data</h2>
+<p>Check the input requirements and available connections before your first task.</p><a href="/setup?token={{.C.Token}}">Set up my workspace</a>
+</section>
+</div>
+{{else}}
+<section>
+<h2>Set up your first task</h2>
+<ol>
+{{range .C.Steps}}
+<li>{{.}}</li>{{end}}
+
+</ol>
+{{range .C.Samples}}
+<p><a href="/onboarding/sample?token={{$.C.Token}}&name={{.Name}}">Download example {{.Name}}</a></p>{{end}}
+
+<form method="post" action="/onboarding/start?token={{.C.Token}}"><input type="hidden" name="mode" value="own"><button>Open my workspace</button>
+<small>You can continue without a setup check; that does not mark a connection as verified.</small>
+</form>
+</section>
+{{if .C.Jira}}
+<section>
+<h2>Optional: test Jira sign-in</h2>
+<p>Skip this if you only want local results. This makes one read-only identity request. It does not verify project permissions, create a ticket, or save your credentials.</p>
+<form method="post" action="/setup/check?token={{.C.Token}}">
+<label>Jira site<input name="jira" placeholder="https://team.atlassian.net" required></label>
+<label>Jira email<input name="email" type="email" required autocomplete="off"></label>
+<label>API token<input name="secret" type="password" required autocomplete="off"></label><button name="check" value="jira">Test Jira sign-in - no ticket</button>
+</form>
+<p>For handoff, you also need a project key and issue type that your account may create/comment on. Check these with your Jira administrator.</p>
+</section>{{end}}
+{{end}}
+
+<section>
+<h2>Already have results?</h2>
+<form method="post" action="/onboarding/start?token={{.C.Token}}"><input type="hidden" name="mode" value="resume"><button>Continue to existing workspace</button>
+</form>
+<p>Restarting this guide does not delete or reset saved results.</p>
+</section>
+<p>Close the application with Ctrl+C in its launcher console. Closing only the browser leaves it running.</p>
+</main>
+</body>
+</html>

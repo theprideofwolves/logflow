@@ -29,3 +29,7 @@ Thumbs.db
 *.db-shm
 *.db-wal
 *.exe~
+
+# Local testing notes and artifacts
+/TESTING-NOTES.md
+/.testing/

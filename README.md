@@ -1,117 +1,104 @@
 # LogFlow
 
-A focused Go log investigation app: repeated failed logins in an event-time
-window, contributing-event evidence, and analyst-approved Jira investigation.
+A local Go app for investigating repeated failed logins in JSONL logs.
+Upload a file or run the offline demo, inspect the events behind each alert,
+and export the investigation. Inspect how nearby rule settings change support
+from the retained evidence, and replay scenarios that expose detection blind spots.
 
-## Two focused capabilities
-1. Detect a precise repeated-failure signal in an inclusive configurable window.
-2. Show the trigger's contributing records and export/handoff the investigation.
+- **Precise detection:** six `Failed login attempt` events from one valid IP
+  within ten minutes, inclusive. Threshold and window are configurable.
+- **Traceable results:** contributing line numbers, timestamps, normalized IPs,
+  input SHA-256, and explicit rejected-record and incomplete-result reporting.
+- **Portable:** browser UI and CLI in one executable; standard library only.
+  White or true-black theme with a teal accent. No account needed offline.
 
-Launch and run the offline synthetic demo, or upload JSONL. Each line requires
-timestamp, level, and message; source_ip is required for per-IP detection.
-The only rule counts exact message "Failed login attempt" with a valid source IP.
-An ERROR level alone does not count. Default: 6 failures within 10 minutes,
-inclusive boundaries. IPv4/IPv6 addresses are normalized.
+## Try it
 
+Download and extract a [release](https://github.com/theprideofwolves/logflow/releases),
+then run `logflow` (`logflow.exe` on Windows). Choose **Try the guided demo**:
+eight synthetic events produce one alert with six contributing records.
+
+Or build from source with Go 1.25.5 or later:
+
+```sh
+go build -o logflow ./cmd/logflow
+./logflow
 ```
-logflow -window 10m -threshold 6 -workers 4 input.jsonl
-logflow -window 10m -threshold 6 -
+
+## Analyze your logs
+
+Use **Use my data** to download the example and upload ordered JSONL.
+Each line needs `timestamp`, `level`, and `message`; detection also needs `source_ip`.
+
+```json
+{"timestamp":"2026-11-06T12:00:00Z","level":"WARN","message":"Failed login attempt","source_ip":"192.0.2.10"}
 ```
-No arguments opens the UI; stdin now requires `-`. CLI stdout is a JSON report.
-Exit 0: complete processing (alerts may exist). Exit 2: invalid configuration,
-incomplete input, or tool failure. This is not a CI pass/fail security verdict.
 
-Input must be in nondecreasing timestamp order. Out-of-order records are rejected
-and completeness is false; sort upstream and rerun. Parsing is concurrent in
-bounded batches; reduction preserves source order. No processing-time windows.
-One alert per active threshold episode, rearmed when the current count falls
-below threshold. Evidence contains the trigger window, not all later failures.
-Each input line is an observation: source duplicate records must be normalized
-before import; the tool has no universally reliable event-ID scheme.
+CLI output is JSON. Use `-` explicitly for stdin:
 
-Defaults: 4 parser workers, 10000 active IPs, 1000 alerts, 1 MiB line limit,
-128 MiB UI request limit, 1000 stored rejection details. Parsing batches are
-bounded by 256 lines and about 4 MiB of raw data. Limits/cancellation/read failures
-produce partial reports rather than clean success. Accepted+rejected equals
-processed lines; there may be an unread suffix. Prefix-only hashes are labeled.
-Only recognized failures are retained for alert evidence, capped by threshold.
+```sh
+./logflow -window 10m -threshold 6 -workers 4 input.jsonl
+cat input.jsonl | ./logflow -
+```
 
-Latest report persists across restarts; export before replacing it. Stored
-evidence includes contributing IPs/times and the fixed event message, not full
-input logs. Jira disclosure includes IP, counts/time, input hash and completeness.
-Alerts are signals for investigation, not confirmed attacks. Incomplete reports
-can be handed off explicitly with their completeness limitation included.
+Input must be in nondecreasing event-time order. Generic `ERROR` messages do not
+match the rule. Duplicate lines count as separate observations. Exit `0` means
+complete processing; `2` means invalid input/configuration, partial processing,
+or failure. An alert is an investigation signal, not proof of compromise.
 
-## Installation and privacy
-Download the platform ZIP from GitHub Releases and extract it. On Windows,
-double-click the executable. On Linux, run the binary; if no desktop opener is
-installed, copy the printed localhost URL into a browser. No development tools,
-Docker, database server, or paid API is needed for the offline workflow.
-The executable is unsigned: OS warnings are possible. Close the application with
-Ctrl+C in its console. Closing the browser does not stop it.
+## Explain the finding
 
-The server binds to an ephemeral localhost port and uses a private per-launch
-token, exact Host and Origin checks, CSP, HTML escaping and request limits.
-Single-user OS trust boundary: no roles or enterprise multi-tenancy. Local
-privileged processes can read memory and data. Do not expose it to a network.
-No telemetry, background uploads, automatic remediation or AI dependency.
+Each alert includes a threshold/window sensitivity table over its retained trigger
+events. It shows evidence support, not statistical confidence or a full-input rerun.
+Higher thresholds may require events outside that retained subset.
 
-Data defaults to the OS user configuration directory / application name.
-Set LOGFLOW_DATA_DIR to change its parent; LOGFLOW_NO_BROWSER=1 suppresses
-browser opening. Only one launcher may use a data directory. After a crash,
-confirm the process has stopped before removing application.lock.
-Stop the app before backup/restore. Replace executables to upgrade; user data
-stays separate. Uninstall by deleting extracted binaries; delete the data
-directory separately only if you intend to remove history.
+Run `./logflow -replay` (or the workspace replay link) for four deterministic
+synthetic scenarios: concentrated failures, slow attempts, distributed sources,
+and benign repeated failures. Two evade the default rule; benign failures can
+also trigger it. These are behavioral demonstrations, not field accuracy metrics.
 
-## Release verification
-CI runs unit/integration tests, race detection, vet, and builds on Windows/Linux.
-Version tags or an explicit [release] commit on main publish the VERSION-selected portable ZIPs and SHA256 checksums after tests pass.
-Dependency metadata is included using go version -m; it is not a full license
-inventory or a signed supply-chain attestation. No unsupported scale or
-enterprise-certification claim is made.
+## Architecture
 
-## Jira setup and delivery semantics
-Use Jira Cloud's HTTPS origin, an authorized account email/API token, project
-key, and a supported issue type (Task by default). Browse/Create/Comment
-permissions are required as appropriate. Projects with custom mandatory fields
-may reject creation: configure a suitable type or explicitly link an existing
-issue. The link action validates access to the issue, not the human's choice.
-Credentials are used only for the request and never saved in ticket history.
-No source snippets or raw credentials are sent. Review the disclosure before send.
+```mermaid
+flowchart LR
+    A[JSONL file / stdin] --> B[Bounded concurrent parsing]
+    B --> C[Ordered event-time windows]
+    C --> D[Alerts + contributing evidence]
+    D --> S[Evidence-only sensitivity]
+    S --> E[CLI JSON / local browser UI]
+    E --> F[Saved report + JSON export]
+    E -->|Reviewed handoff| G[Jira + durable delivery state]
+```
 
-The app persists a create intent before contacting Jira. A missing/uncertain
-response blocks repeat creates: search Jira for the shown correlation ID, then
-link the existing key. Definitive 400/401/403/404/422 rejections may be corrected
-and retried. No automatic retry loops. Existing mappings receive evidence
-comments; an uncertain comment may have succeeded, so inspect Jira before retry.
-No automatic issue closure or bidirectional/background synchronization.
-Mappings are scoped to origin and local finding/alert ID. Losing local history
-or using a different origin breaks local deduplication: link existing work first.
-Live Jira permission/field compatibility requires actual authorized testing;
-TLS fake-server tests are not proof of live integration.
+The UI binds only to localhost with a private per-launch token. Latest results
+stay in the OS configuration directory under `LogFlow`; export before replacing
+them. `LOGFLOW_DATA_DIR` overrides the **parent** directory.
+`LOGFLOW_NO_BROWSER=1` suppresses browser opening. Ctrl+C stops the app.
 
-## Developer checks
-`go test -race ./...`, `go vet ./...`, `go build ./cmd/logflow`.
-See architecture.md, interviewprep.md and explaining-each-decision-taken-over-others.md.
+No telemetry or background uploads. Demo alerts cannot create Jira tickets.
+Uncertain Jira creates block retries until reconciled; credentials are not saved.
 
-## Guided first run
+[Implementation and limits](architecture.md) · [Tests and quick manual checklist](TESTING.md)
 
-Choose **Try the guided demo** or **Use my data**. The offline demo analyzes eight
-synthetic failed logins and produces one alert for 192.0.2.10, showing the six
-events that triggered it. It cannot create a real Jira ticket.
+## Measured results
 
-For your own data, download example-logs.jsonl from setup, then upload your
-ordered JSONL file in the workspace. No account or connection is needed for
-local analysis. Review completeness and rejected records before interpreting
-alerts, then export the investigation or explicitly send an alert to Jira.
+The 2026-11-10 local run passed **47 top-level tests + 55 subtests** with
+**77.7% statement coverage**. In-memory processing of 100,000 synthetic records
+across 1,000 IPs measured a median **635,075 records/s** with four workers.
+This excludes disk I/O, JSON export and UI; it is not field detection accuracy.
 
-The optional Jira sign-in check calls GET /rest/api/3/myself. It checks identity,
-not project create/comment permissions, and never creates tickets or saves your
-email/API token. Re-enter credentials for a reviewed alert handoff.
+[Reproducible results](docs/results/README.md) include race-test/coverage outcomes,
+functional evidence and synthetic processing benchmarks.
+[Functionality matrix](docs/FUNCTIONALITY.md) distinguishes automated checks,
+mocked Jira integration and unverified manual behavior.
 
-A complete analysis remembers guide completion in onboarding.json, containing
-only a version and completion flag. Partial reports do not mark completion.
-**Restart the guide** preserves reports; **Continue to existing workspace** opens
-saved work without rerunning analysis. Missing or corrupt guide preferences show
-the guide again. A progress-save failure is displayed without discarding results.
+## Development checks
+
+```sh
+go test -race -count=1 ./...
+go vet ./...
+go build -o logflow ./cmd/logflow
+python .github/scripts/smoke.py ./logflow
+```
+
+Tests use temporary data and local Jira mocks, without paid services or credentials.

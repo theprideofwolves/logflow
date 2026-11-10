@@ -104,5 +104,3 @@ func Serve(name, dir string, factory func(string) http.Handler) error {
 	}
 	return e
 }
-
-const Style = `body{font:16px system-ui;background:#0b1627;color:#e4edf8;max-width:1100px;margin:40px auto;padding:0 24px}section{background:#18293e;padding:24px;border:1px solid #344a64;border-radius:12px;margin:20px 0}h1{font-size:38px}h2{font-size:23px}p,small{line-height:1.6}small{color:#b8cce0}input,textarea,select{display:block;width:94%;max-width:800px;background:#0b1627;color:white;border:1px solid #8ba3bd;padding:10px;border-radius:5px;margin:8px 0}textarea{min-height:120px}label{display:block;margin:16px 0}button{background:#92e5c0;color:#102332;font-weight:700;padding:12px 18px;border:0;border-radius:6px;cursor:pointer;margin:8px 4px 8px 0}a{color:#a3d2ff}pre{white-space:pre-wrap;overflow-wrap:anywhere}td,th{padding:10px;text-align:left;border-bottom:1px solid #42566d;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}.notice{padding:18px;background:#29415b;border-radius:8px}.scroll{overflow:auto}summary{cursor:pointer}`
