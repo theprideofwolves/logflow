@@ -51,6 +51,17 @@
 
 </table>
 </div>
+<details>
+<summary>Draft an investigation</summary>
+<form method="post" enctype="multipart/form-data" action="/?token={{$.Token}}">
+<input type="hidden" name="id" value="{{.ID}}">
+<label>Draft mode<select name="provider"><option value="offline">Offline evidence draft (free, no model)</option><option value="ollama">Local Ollama model (optional)</option><option value="openai">My OpenAI API account (optional, billed separately)</option></select></label>
+<p>The offline draft includes observed facts, missing evidence and cited project runbook sections. A model can select approved read-only tools and guidance, but cannot supply factual conclusions or send tickets.</p>
+<p>OpenAI receives the alert ID, failure count, completeness/rejection count and bundled runbook text. IPs, timestamps, raw logs, Jira credentials and API keys are not included in that context. The server uses your separately configured API key.</p>
+<label><input type="checkbox" name="allow_remote" value="yes"> I allow this context to be sent to OpenAI if that mode is selected.</label>
+<button name="action" value="draft">Generate read-only draft</button>
+</form>
+</details>
 <small>One alert per active threshold episode; another can occur after the count falls below threshold. Evidence is the trigger window, not every subsequent event.</small>
 <details>
 <summary>How sensitive is this finding?</summary>
@@ -74,10 +85,10 @@
 <p>Review the selected record before sending. Sends only the disclosed finding/alert summary and correlation ID. Tokens are used for this request and never saved. Creates once; linked issues receive evidence comments. No automatic ticket closure. Inspect Jira before retrying an uncertain comment.</p>
 <label>Jira origin<input name="jira" placeholder="https://team.atlassian.net" required></label>
 <label>Email<input name="email" type="email" required autocomplete="off"></label>
-<label>API token<input name="secret" type="password" required autocomplete="off"></label>
+
 <label>Project<input name="project" placeholder="SEC"></label>
 <label>Issue type<input name="kind" value="Task"></label>
-<label>Existing key (optional; validates and links instead of creating)<input name="link" placeholder="SEC-123"></label><button name="action" value="ticket">Send reviewed record / link issue</button>
+<label>Existing key (optional; validates and links instead of creating)<input name="link" placeholder="SEC-123"></label><button name="action" value="ticket">Preview Jira handoff</button>
 </section>
 </form>
 </details>
@@ -88,11 +99,45 @@
 
 </section>{{end}}
 
+{{if .Saved.Assistant}}
+<section id="investigation-draft">
+<h2>Investigation draft</h2>
+<p>Mode: {{.Saved.Assistant.Mode}} · Status: {{.Saved.Assistant.Status}}</p>
+{{if .Saved.Assistant.Warning}}<p role="status">{{.Saved.Assistant.Warning}}</p>{{end}}
+<small>Snapshot: {{.Saved.Assistant.Snapshot}} · Draft: {{.Saved.Assistant.ID}}</small>
+<h3>Observed facts</h3>
+{{range .Saved.Assistant.Facts}}<p>{{.Text}} <small>References: {{range .Citations}}{{.}} {{end}}</small></p>{{end}}
+<h3>Limitations</h3><ul>{{range .Saved.Assistant.Limitations}}<li>{{.}}</li>{{end}}</ul>
+<h3>Runbook guidance</h3>
+{{range .Saved.Assistant.Guidance}}<article><h3>{{.Title}}</h3><p>{{.Text}}</p><small>Citation: {{.ID}} / version {{.Version}} · {{.Source}}</small></article>{{end}}
+<details><summary>Resolve evidence citations</summary>{{range .Saved.Assistant.References}}<p><code>{{.ID}}</code>: {{.Text}}</p>{{end}}</details>
+<p><a href="/assistant?token={{.Token}}">Export draft and tool trace JSON</a></p>
+<p>This draft cannot execute an action. Jira requires a separate human review.</p>
+</section>
+{{end}}
 <section>
 <h2>Explore detection blind spots</h2>
 <p>The offline replay compares concentrated, slow, distributed, and benign repeated failures using the default rule. Expected results describe rule behavior, not attack detection accuracy.</p>
 <p><a href="/replay?token={{.Token}}">Run synthetic replay (JSON)</a> · CLI: <code>logflow -replay</code></p>
 </section>
+{{if .Preview}}
+<section id="jira-preview">
+<h2>Review exact Jira handoff</h2>
+<p>Destination: {{.Preview.Config.Origin}} · Project: {{.Preview.Config.Project}} · Type: {{.Preview.Config.Kind}} · Existing key: {{.Preview.Link}}</p>
+<p>Account: {{.Preview.Config.Email}} · Snapshot: {{.Preview.Snapshot}}</p>
+<p>Title: Investigate repeated failed-login signal</p>
+<pre>{{.Preview.Body}}
+Correlation: {{.Preview.Config.Origin}}|logflow|{{.Preview.AlertID}}</pre>
+<p>For an existing mapping, this adds a comment. Explicit linking validates and saves a link. Uncertain creates remain blocked by delivery state.</p>
+<form method="post" enctype="multipart/form-data" action="/?token={{.Token}}">
+<input type="hidden" name="approval" value="{{.Preview.Nonce}}">
+<label>Jira API token<input type="password" name="secret" required autocomplete="off"></label>
+<label><input type="checkbox" name="confirm_send" value="yes" required> I approve this exact disclosure and destination.</label>
+<button name="action" value="approve_ticket">Approve and send / link</button>
+</form>
+<p>To cancel, leave this preview without submitting it. Approvals expire and cannot be reused.</p>
+</section>
+{{end}}
 <section>
 <h2>Ticket delivery records</h2>
 {{range $id,$v:=.Tickets}}

@@ -304,3 +304,5 @@ footer {
     color:#000;
   }
 }
+
+input[type="checkbox"] { display:inline-block; width:auto; margin-right:8px; accent-color:var(--accent); }

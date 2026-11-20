@@ -1,3 +1,11 @@
+## Local-first investigation companion
+
+- Offline facts, evidence references and versioned project runbook guidance.
+- Optional Ollama/OpenAI read-only tool selection with explicit remote consent.
+- Local stdio MCP reads and draft/tool/audit exports.
+- Server-held, expiring, single-use Jira preview approvals and approval audit.
+- Manual companion/live-provider verification remains pending.
+
 # Unreleased
 
 - Add bounded, evidence-only threshold/window sensitivity to new alerts and JSON export.

@@ -114,3 +114,12 @@ B/op, not peak RSS, retained state, file size or total application memory. Resul
 exclude fixture generation, disk I/O, JSON serialization, UI and Jira. Hardware,
 Go version, GOMAXPROCS and all observed ranges are recorded; do not cherry-pick
 a single fastest sample or generalize these figures to production performance.
+
+## Companion extension
+
+See docs/MANUAL-ASSISTANT.md for the pending operator checklist. The new safety
+regressions cover evidence validation, immutable copies, citations, forbidden/unknown
+tools, injected model-plan fields, malformed/trailing data, missing provider setup,
+MCP allowlisting, audit failures and Jira approval bypass/reuse/stale snapshots.
+No live provider request or manual outcome is inferred from these tests. Existing
+recorded benchmark/coverage numbers identify the older measured revision.

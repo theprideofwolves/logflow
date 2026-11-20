@@ -1,0 +1,6 @@
+[
+ {"ID":"auth-scope","Version":"1","Title":"Scope and intent","Text":"Repeated failures support an authentication-failure pattern, not a confirmed attack. Compare account, destination and successful-login evidence before reaching a compromise conclusion.","Source":"https://attack.mitre.org/techniques/T1110/001/"},
+ {"ID":"input-quality","Version":"1","Title":"Incomplete evidence","Text":"Review rejected records, missing source addresses and processing limits. An incomplete report cannot establish the absence of other activity. Recover the source data and rerun before making a whole-file claim.","Source":"project:architecture.md"},
+ {"ID":"source-check","Version":"1","Title":"Validate the original source","Text":"Preserve the original event records and document normalization. For Windows failed logons, verify event 4625 and available source-address fields. Do not invent an IP when the source does not provide one.","Source":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625"},
+ {"ID":"rule-gaps","Version":"1","Title":"Check rule blind spots","Text":"Slow or distributed attempts can evade per-IP thresholds. Benign repeated failures can also alert. Sensitivity uses retained trigger evidence only, not a full-input rerun.","Source":"project:internal/analysis/replay.go"}
+]

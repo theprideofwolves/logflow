@@ -8,3 +8,5 @@ New source: internal/analysis/sensitivity.go computes the evidence-local grid;
 internal/analysis/replay.go defines reproducible synthetic blind-spot scenarios.
 The interview guide includes the seventh-event counterexample and defensible
 resume wording. Start there before demonstrating the feature.
+
+Read docs/ASSISTANT.md for the companion and the new interview update.

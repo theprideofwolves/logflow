@@ -39,3 +39,14 @@ not mean every edge case or interactive browser behavior has been verified.
 A complete report means the defined input was processed, not that the environment
 is safe. Synthetic benchmarks and statement coverage cannot establish operational
 security effectiveness. No result in this matrix represents production adoption.
+
+## Companion extension (manual results pending)
+
+New code in internal/assistant implements deterministic drafts, allowlisted
+runbook retrieval, optional provider planning, stdio MCP and local provenance.
+TestOfflineDraftAndImmutableSnapshot, TestToolAndPromptInjectionBoundaries,
+TestMissingEvidenceAndFailedProvider and TestMCPReadsOnlySelectedSnapshot cover
+safety contracts. TestDraftUIAndApprovalBoundaries covers remote opt-in and Jira
+preview/confirmation/reuse/stale-snapshot checks with a local fake server.
+These additions do not update the historical measured results. See the new manual
+checklist for actual UI, model, MCP-client and live-Jira observations.

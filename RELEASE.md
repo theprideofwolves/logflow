@@ -1,3 +1,10 @@
+# Companion source update
+
+Build current source for the new offline investigation companion and optional
+local-model/BYO OpenAI selection. API use is optional and separately billed.
+MCP exposes reads only; Jira requires a separate server-validated human preview.
+No new portable release or manual/live-provider validation is implied by this commit.
+
 # Local unreleased changes
 
 New investigations include evidence-only threshold/window sensitivity. Offline

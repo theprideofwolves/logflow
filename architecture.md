@@ -132,3 +132,39 @@ Cancellation leaves replay rows incomplete and expectation agreement false.
 
 The project still consumes normalized ordered JSONL; native SSH/Windows ingestion,
 real-world labelled evaluations and throughput claims remain future work.
+
+## Optional investigation companion
+
+internal/assistant validates and deep-copies one report/alert into a SHA256-named
+snapshot. It constructs factual statements from typed evidence and retrieves
+versioned bundled guidance. Drafts cite finding/report/line references. The corpus
+hash and exact retrieved text are recorded. Hashes identify content, not its truth
+or source authenticity. Imported JSON can be fabricated; verify original records.
+
+Models cannot supply factual prose. An optional one-request planner selects up to
+four reads from a fixed allowlist. The six deterministic baseline reads and model
+reads are recorded separately in the trace by sequence. A 30-second request limit,
+800-token requested output cap, 64-KiB response limit and strict 16-KiB plan parsing
+bound provider work. Unknown tools/IDs, extra fields, trailing data and malformed
+plans fall back visibly. There are no provider retries or tool-driven writes.
+OpenAI and loopback Ollama endpoints are fixed; arbitrary URLs are unsupported.
+The reduced provider context excludes raw logs, addresses, timestamps and keys.
+
+The official MCP Go SDK supplies stdio transport for the same three read-only
+handlers. Operators select the report file and alert at process start. No shell,
+writer or general file-reader tool exists. MCP clients control their own subsequent
+disclosures; this process does not make them private or trusted. Read events go to
+stderr; protocol frames go to stdout. No remote MCP hosting/OAuth is introduced.
+
+The local UI adds a separate Jira preview. The server binds an unpredictable,
+single-use, five-minute preview to report hash, alert, destination, account, issue
+fields, disclosure and link choice. The approval POST cannot override those values.
+The operator supplies the credential only at final confirmation. Approval audit
+must persist before handoff. Existing pending/uncertain intent and recovery remain.
+This is local human review, not role-based multi-user authorization or exactly-once
+comments. No API or MCP path lets the model approve itself.
+
+Draft files and assistant/handoff JSONL audits are local provenance, not signed,
+tamper-proof records. They are sensitive and have retention limits. The server
+serializes work; an optional model request may hold the UI lock until its timeout.
+See docs/ASSISTANT.md for configuration/disclosure and the pending manual checklist.

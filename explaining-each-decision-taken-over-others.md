@@ -49,3 +49,14 @@ Use deterministic synthetic replays through Process rather than a separate toy
 detector. Include a benign alerting scenario to expose the predicate's inability
 to establish intent. Do not claim attack-classification accuracy from four fixtures.
 Keep replay read-only and separate from persistence and Jira handoff.
+
+## Companion decisions
+
+Free deterministic drafts are the default. A local model or user-owned API is
+optional; no hosted account subsidy or public multi-user service is introduced.
+Constrain model output to tool selection rather than arbitrary conclusions. This
+trades free-form narrative for verifiable facts, predictable cost and a smaller
+injection boundary. A full agent/RAG loop is not claimed. Retrieve reviewed bundled
+sections before adding embeddings, user-uploaded documents or arbitrary searches.
+Separate model reads from Jira credentials and enforce exact-preview approval in
+the application. Preserve the current detector and uncertain-delivery semantics.

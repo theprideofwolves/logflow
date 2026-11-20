@@ -120,3 +120,25 @@ Adjust verbs to your actual contribution. Do not claim SOC adoption, false-posit
 reduction, production scale, calibrated confidence, or an independently validated
 novel algorithm. Before interviewing, explain the seventh-event counterexample
 without looking at this guide, and trace one fixture through the actual code.
+
+## Companion interview update
+
+The extension is a bounded investigation workflow, not an autonomous SOC agent.
+Offline mode constructs facts/citations deterministically. Optional models select
+approved reads and guidance; they cannot write conclusions, add source material,
+change a rule or send Jira. MCP exposes the same reads to a trusted local client.
+There is no embedding/vector database or general-purpose RAG search. Project-authored
+runbooks have versions and a corpus hash, not enterprise approval.
+
+Explain the threat boundary: only validated structured metadata goes to the planner;
+raw logs and secrets do not. Unknown plan fields/tools/IDs are rejected. Backend
+policy matters more than a prompt asking the model to behave. A failed provider
+retains an offline draft with a warning. A client using MCP can still disclose the
+evidence it reads under its own settings.
+
+Explain Jira approval: server-held snapshot/configuration/disclosure, unpredictable
+single-use nonce, five-minute expiry, explicit confirmation, approval audit before
+sending, and existing durable uncertainty state afterward. No model has a writer
+or the Jira key. Do not claim all prompt injection is solved or recovery is live-
+validated. Manual screenshots/model/Jira observations for the extension are pending.
+ChatGPT Plus is not ordinary API billing; visitors bring their own optional account.

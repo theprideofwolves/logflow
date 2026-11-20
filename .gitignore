@@ -33,3 +33,11 @@ Thumbs.db
 # Local testing notes and artifacts
 /TESTING-NOTES.md
 /.testing/
+
+# Private runtime credentials and assistant records
+.env
+.env.*
+!.env.example
+assistant-audit.jsonl
+handoff-audit.jsonl
+/investigations/

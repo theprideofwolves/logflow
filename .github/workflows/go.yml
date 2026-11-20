@@ -34,6 +34,7 @@ jobs:
           path: |
             dist/
             coverage.out
+            THIRD_PARTY_NOTICES.md
             benchmarks.txt
   release:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
@@ -54,7 +55,7 @@ jobs:
             mkdir -p "package-$os"
             GOOS=$os GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o "package-$os/logflow$ext" ./cmd/logflow
             go version -m "package-$os/logflow$ext" > "package-$os/dependencies.txt"
-            cp README.md TESTING.md RELEASE.md architecture.md interviewprep.md explaining-each-decision-taken-over-others.md "package-$os/"
+            cp README.md TESTING.md THIRD_PARTY_NOTICES.md RELEASE.md architecture.md interviewprep.md explaining-each-decision-taken-over-others.md "package-$os/"
             cp -r docs "package-$os/"
             (cd "package-$os" && zip -r "../release/logflow-$os-x64.zip" .)
           done
